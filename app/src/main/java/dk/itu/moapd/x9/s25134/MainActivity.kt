@@ -34,13 +34,10 @@ class MainActivity : AppCompatActivity() {
 
             // Requirement: Validate user input / Prevent empty submissions
             if (description.isEmpty()) {
-                // This highlights the whole box in red and shows the message below it
-                val inputLayout = findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.input_layout_description)
                 inputLayout.error = getString(R.string.error_empty_description)
                 return@setOnClickListener
             } else {
                 // Clear the error if input is valid
-                val inputLayout = findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.input_layout_description)
                 inputLayout.error = null
             }
 

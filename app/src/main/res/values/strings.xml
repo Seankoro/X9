@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">X9</string>
+    <string name="title_text">Traffic Report (X9)</string>
+    <string name="label_type">Type of report</string>
+    <string name="hint_description">Situation description…</string>
+    <string name="label_severity">Severity Level (0-5)</string>
+    <string name="button_submit">Submit Report</string>
+    <string name="no_data_yet">No data submitted yet.</string>
+    <string name="error_empty_description">Description cannot be empty!</string>
+    <string name="report_submitted_toast">Report processed and logged.</string>
+
+    <string name="summary_header">Latest Submission:</string>
+    <string name="summary_type">Type: %1$s</string>
+    <string name="summary_severity">Severity: %1$d/5</string>
+    <string name="summary_description">Desc: %1$s</string>
+
+    <string-array name="traffic_types">
+        <item>Speed Camera</item>
+        <item>Heavy Traffic</item>
+        <item>Accident</item>
+        <item>Road Work</item>
+    </string-array>
+</resources>

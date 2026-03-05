@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:fillViewport="true"
     android:background="?android:attr/colorBackground"
-    tools:context=".ReportActivity">
+    tools:context=".ReportFragment">
 
     <LinearLayout
         android:layout_width="match_parent"

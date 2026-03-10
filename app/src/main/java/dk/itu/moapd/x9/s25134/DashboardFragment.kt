@@ -64,6 +64,7 @@ class DashboardFragment : Fragment() {
         Log.d(TAG, "onViewCreated() called")
 
         val btnOpenReporter = view.findViewById<Button>(R.id.button_open_reporter)
+        val btnOpenCompose = view.findViewById<Button>(R.id.button_open_compose_reports)
         val btnToggleDark = view.findViewById<ImageButton>(R.id.button_toggle_dark_mode)
         val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_reports)
 
@@ -98,6 +99,15 @@ class DashboardFragment : Fragment() {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, ReportFragment())
                 .addToBackStack("report")
+                .commit()
+        }
+
+        // Navigate to Compose-based report screen
+        btnOpenCompose.setOnClickListener {
+            Log.d(TAG, "Navigating to ComposeReportFragment via Fragment transaction")
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, ComposeReportFragment())
+                .addToBackStack("compose_reports")
                 .commit()
         }
 

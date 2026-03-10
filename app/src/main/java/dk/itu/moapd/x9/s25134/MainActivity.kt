@@ -12,6 +12,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.IntentCompat
 
+/**
+ * Dashboard screen — shows the latest submitted report and lets the user
+ * open the report form or toggle dark mode.
+ */
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -33,7 +37,7 @@ class MainActivity : AppCompatActivity() {
             report?.let {
                 val summary = getString(R.string.summary_header) + "\n" +
                         getString(R.string.summary_type, it.type) + "\n" +
-                        getString(R.string.summary_severity, it.severity.toInt()) + "\n" +
+                        getString(R.string.summary_severity, it.severity) + "\n" +
                         getString(R.string.summary_description, it.description)
 
                 textOutput.text = summary
@@ -43,7 +47,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Apply stored theme preference before layout is inflated
+            // Must run before super so the right theme is active when the layout inflates
         applyStoredTheme()
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() called")
@@ -76,7 +80,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Reads the stored dark-mode preference and applies it via AppCompatDelegate. */
+    /** Restores the user's dark mode preference from SharedPreferences. */
     private fun applyStoredTheme() {
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         if (prefs.contains(KEY_DARK_MODE)) {
@@ -86,10 +90,10 @@ class MainActivity : AppCompatActivity() {
                 AppCompatDelegate.MODE_NIGHT_NO
             AppCompatDelegate.setDefaultNightMode(mode)
         }
-        // If no preference is stored yet, leave the system default untouched
+        // No saved preference yet — follow system default
     }
 
-    /** Returns true if the activity is currently rendered in dark mode. */
+    /** Checks whether we're currently in dark mode. */
     private fun isCurrentlyInDarkMode(): Boolean {
         return when (AppCompatDelegate.getDefaultNightMode()) {
             AppCompatDelegate.MODE_NIGHT_YES -> true

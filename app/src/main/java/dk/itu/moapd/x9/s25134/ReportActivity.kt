@@ -12,6 +12,10 @@ import androidx.core.widget.doOnTextChanged
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 
+/**
+ * Form screen for creating a new traffic report.
+ * Sends the completed report back to MainActivity via setResult().
+ */
 class ReportActivity : AppCompatActivity() {
 
     companion object {
@@ -23,7 +27,6 @@ class ReportActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate() called")
         setContentView(R.layout.activity_main)
 
-        // Initialize UI elements
         val spinnerType = findViewById<Spinner>(R.id.spinner_report_type)
         val editDescription = findViewById<EditText>(R.id.edit_text_description)
         val seekBarSeverity = findViewById<SeekBar>(R.id.seek_bar_severity)
@@ -31,11 +34,11 @@ class ReportActivity : AppCompatActivity() {
         val buttonSubmit = findViewById<Button>(R.id.button_submit)
         val inputLayout = findViewById<TextInputLayout>(R.id.input_layout_description)
 
-        // Initialize severity display to match the SeekBar's starting position
+        // Sync the severity chip with the slider's initial position
         textSeverityValue.text = getString(R.string.severity_value, seekBarSeverity.progress)
         updateSeverityChipColor(textSeverityValue, seekBarSeverity.progress)
 
-        // Update severity label and chip color in real time as the user drags the slider
+        // Update chip as the user drags
         seekBarSeverity.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 textSeverityValue.text = getString(R.string.severity_value, progress)
@@ -45,14 +48,14 @@ class ReportActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar) {}
         })
 
-        // Clear error as soon as the user starts typing
+        // Clear validation error once the user starts typing
         editDescription.doOnTextChanged { text, _, _, _ ->
             if (!text.isNullOrEmpty()) {
                 inputLayout.error = null
             }
         }
 
-        // Ask before discarding unsaved changes on back press
+        // Confirm before discarding if the user has typed something
         onBackPressedDispatcher.addCallback(this) {
             if (editDescription.text.isNotEmpty()) {
                 MaterialAlertDialogBuilder(this@ReportActivity)
@@ -69,11 +72,10 @@ class ReportActivity : AppCompatActivity() {
             }
         }
 
-        // Submit logic
         buttonSubmit.setOnClickListener {
             val type = spinnerType.selectedItem.toString()
             val description = editDescription.text.toString().trim()
-            val severity = seekBarSeverity.progress.toFloat()
+            val severity = seekBarSeverity.progress
 
             if (description.isEmpty()) {
                 inputLayout.error = getString(R.string.error_empty_description)
@@ -82,7 +84,7 @@ class ReportActivity : AppCompatActivity() {
             }
 
             val report = TrafficReport(type, description, severity)
-            Log.d(TAG, "Report submitted — Type: $type | Severity: ${severity.toInt()}/5 | Description: $description")
+            Log.d(TAG, "Report submitted — Type: $type | Severity: $severity/5 | Description: $description")
 
             val resultIntent = Intent().apply {
                 putExtra("EXTRA_REPORT", report)
@@ -92,7 +94,7 @@ class ReportActivity : AppCompatActivity() {
         }
     }
 
-    /** Tints the severity chip green (1–2), amber (3), or red (4–5). */
+    /** Sets the chip color based on severity: green (1–2), amber (3), red (4–5). */
     private fun updateSeverityChipColor(chip: TextView, progress: Int) {
         val colorRes = when (progress) {
             1, 2 -> R.color.severity_low

@@ -1,71 +1,135 @@
 package dk.itu.moapd.x9.s25134
 
+import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import android.widget.EditText
-import android.widget.Spinner
-import android.widget.SeekBar
+import android.widget.ImageButton
 import android.widget.TextView
-import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.IntentCompat
 
 /**
- * Main screen for submitting traffic reports.
- * Users pick a report type, describe the situation, and set a severity level.
- * Reports are stored in memory only — nothing persists across sessions for now.
+ * Dashboard screen — shows the latest submitted report and lets the user
+ * open the report form or toggle dark mode.
  */
 class MainActivity : AppCompatActivity() {
 
-    private val TAG = "TrafficReportActivity"
+    companion object {
+        private const val TAG = "MainActivity"
+        private const val PREFS_NAME = "x9_prefs"
+        private const val KEY_DARK_MODE = "dark_mode"
+    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    private lateinit var textOutput: TextView
 
-        // Form inputs
-        val spinnerType = findViewById<Spinner>(R.id.spinner_report_type)
-        val editDescription = findViewById<EditText>(R.id.edit_text_description)
-        val seekBarSeverity = findViewById<SeekBar>(R.id.seek_bar_severity)
-        val buttonSubmit = findViewById<Button>(R.id.button_submit)
-        val textOutput = findViewById<TextView>(R.id.text_view_output)
-        val inputLayout = findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.input_layout_description)
-
-        buttonSubmit.setOnClickListener {
-            val type = spinnerType.selectedItem.toString()
-            val description = editDescription.text.toString().trim()
-            val severity = seekBarSeverity.progress
-
-            // Don't allow empty descriptions
-            if (description.isEmpty()) {
-                inputLayout.error = getString(R.string.error_empty_description)
-                return@setOnClickListener
-            } else {
-                inputLayout.error = null
+    private val reportLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val report = result.data?.let { intent ->
+                IntentCompat.getParcelableExtra(intent, "EXTRA_REPORT", TrafficReport::class.java)
             }
 
-            val report = TrafficReport(type, description, severity)
+            report?.let {
+                val summary = getString(R.string.summary_header) + "\n" +
+                        getString(R.string.summary_type, it.type) + "\n" +
+                        getString(R.string.summary_severity, it.severity) + "\n" +
+                        getString(R.string.summary_description, it.description)
 
-            // Log report to Logcat for debugging
-            Log.d(TAG, "--- Traffic Report Summary ---")
-            Log.d(TAG, "Type: ${report.type}")
-            Log.d(TAG, "Severity: ${report.severity}")
-            Log.d(TAG, "Description: ${report.description}")
-            Log.d(TAG, "------------------------------")
-
-            // Show the submitted report on screen
-            val summaryText = getString(R.string.summary_header) + "\n" +
-                    getString(R.string.summary_type, report.type) + "\n" +
-                    getString(R.string.summary_severity, report.severity) + "\n" +
-                    getString(R.string.summary_description, report.description)
-
-            textOutput.text = summaryText
-
-            Toast.makeText(this, R.string.report_submitted_toast, Toast.LENGTH_SHORT).show()
-
-            // Reset form for the next report
-            editDescription.text.clear()
-            seekBarSeverity.progress = 0
+                textOutput.text = summary
+                Log.d(TAG, "Report received from ReportActivity: $it")
+            }
         }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+            // Must run before super so the right theme is active when the layout inflates
+        applyStoredTheme()
+        super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate() called")
+        setContentView(R.layout.activity_main_dashboard)
+
+        textOutput = findViewById(R.id.text_view_main_output)
+        val btnOpenReporter = findViewById<Button>(R.id.button_open_reporter)
+        val btnToggleDark = findViewById<ImageButton>(R.id.button_toggle_dark_mode)
+
+        btnOpenReporter.setOnClickListener {
+            Log.d(TAG, "Launching ReportActivity via explicit Intent")
+            val intent = Intent(this, ReportActivity::class.java)
+            reportLauncher.launch(intent)
+        }
+
+        btnToggleDark.setOnClickListener {
+            val currentlyDark = isCurrentlyInDarkMode()
+            val newDark = !currentlyDark
+
+            getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                .putBoolean(KEY_DARK_MODE, newDark)
+                .apply()
+
+            Log.d(TAG, "Dark mode toggled — dark=$newDark (was $currentlyDark)")
+
+            AppCompatDelegate.setDefaultNightMode(
+                if (newDark) AppCompatDelegate.MODE_NIGHT_YES
+                else AppCompatDelegate.MODE_NIGHT_NO
+            )
+        }
+    }
+
+    /** Restores the user's dark mode preference from SharedPreferences. */
+    private fun applyStoredTheme() {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        if (prefs.contains(KEY_DARK_MODE)) {
+            val mode = if (prefs.getBoolean(KEY_DARK_MODE, false))
+                AppCompatDelegate.MODE_NIGHT_YES
+            else
+                AppCompatDelegate.MODE_NIGHT_NO
+            AppCompatDelegate.setDefaultNightMode(mode)
+        }
+        // No saved preference yet — follow system default
+    }
+
+    /** Checks whether we're currently in dark mode. */
+    private fun isCurrentlyInDarkMode(): Boolean {
+        return when (AppCompatDelegate.getDefaultNightMode()) {
+            AppCompatDelegate.MODE_NIGHT_YES -> true
+            AppCompatDelegate.MODE_NIGHT_NO  -> false
+            else -> resources.configuration.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d(TAG, "onStart() called — Activity is visible to the user")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(TAG, "onResume() called — Activity is in the foreground and interactive")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause() called — Activity is partially obscured (e.g. another Activity launching)")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop() called — Activity is no longer visible")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Log.d(TAG, "onRestart() called — Activity is returning from stopped state")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy() called — Activity is being destroyed (rotation or finish)")
     }
 }

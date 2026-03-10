@@ -14,6 +14,10 @@ import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 
+/**
+ * Dashboard — shows the latest submitted report, a button to file a new one,
+ * and a dark mode toggle.
+ */
 class DashboardFragment : Fragment() {
 
     companion object {
@@ -24,15 +28,13 @@ class DashboardFragment : Fragment() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() called")
 
-        // Register to receive the completed report from ReportFragment.
-        // The result is only delivered once the fragment is at least STARTED,
-        // so the view is guaranteed to exist when the callback runs.
+        // Listen for reports coming back from ReportFragment
         parentFragmentManager.setFragmentResultListener("report_result", this) { _, bundle ->
             val report = BundleCompat.getParcelable(bundle, "report", TrafficReport::class.java)
             report?.let {
                 val summary = getString(R.string.summary_header) + "\n" +
                         getString(R.string.summary_type, it.type) + "\n" +
-                        getString(R.string.summary_severity, it.severity.toInt()) + "\n" +
+                        getString(R.string.summary_severity, it.severity) + "\n" +
                         getString(R.string.summary_description, it.description)
 
                 view?.findViewById<TextView>(R.id.text_view_main_output)?.text = summary
@@ -61,9 +63,8 @@ class DashboardFragment : Fragment() {
         val btnOpenReporter = view.findViewById<Button>(R.id.button_open_reporter)
         val btnToggleDark = view.findViewById<ImageButton>(R.id.button_toggle_dark_mode)
 
-        // Navigate to ReportFragment via a Fragment transaction, adding to back stack
         btnOpenReporter.setOnClickListener {
-            Log.d(TAG, "Navigating to ReportFragment via Fragment transaction")
+            Log.d(TAG, "Opening ReportFragment")
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, ReportFragment())
                 .addToBackStack("report")

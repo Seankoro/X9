@@ -62,7 +62,7 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="10dp" />
 
-            <!-- Outlined card wrapping the Spinner for consistent styling -->
+            <!-- Spinner wrapped in a card for the outlined look -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
@@ -136,7 +136,7 @@
             android:paddingStart="20dp"
             android:paddingEnd="20dp">
 
-            <!-- Label row: "Severity Level" label + live chip -->
+            <!-- Severity label + colored chip -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -154,7 +154,7 @@
                     android:textColor="?attr/colorOnSurface"
                     android:textStyle="bold" />
 
-                <!-- Live severity chip: color updated at runtime by ReportActivity -->
+                <!-- Chip — color is set programmatically -->
                 <TextView
                     android:id="@+id/text_severity_value"
                     android:layout_width="wrap_content"

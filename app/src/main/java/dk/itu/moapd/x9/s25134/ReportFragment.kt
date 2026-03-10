@@ -15,6 +15,10 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 
+/**
+ * Form for creating a new traffic report.
+ * Sends the result back to DashboardFragment via the Fragment Result API.
+ */
 class ReportFragment : Fragment() {
 
     companion object {
@@ -46,7 +50,7 @@ class ReportFragment : Fragment() {
         val buttonSubmit = view.findViewById<Button>(R.id.button_submit)
         val inputLayout = view.findViewById<TextInputLayout>(R.id.input_layout_description)
 
-        // Initialise severity chip to the SeekBar's starting position
+        // Sync the chip with the slider's initial value
         textSeverityValue.text = getString(R.string.severity_value, seekBarSeverity.progress)
         updateSeverityChipColor(textSeverityValue, seekBarSeverity.progress)
 
@@ -59,14 +63,12 @@ class ReportFragment : Fragment() {
             override fun onStopTrackingTouch(seekBar: SeekBar) {}
         })
 
-        // Clear error as soon as the user starts typing again
+        // Clear validation error once the user starts typing
         editDescription.doOnTextChanged { text, _, _, _ ->
             if (!text.isNullOrEmpty()) inputLayout.error = null
         }
 
-        // Intercept back press — confirm discard if the user has typed something.
-        // Using viewLifecycleOwner automatically unregisters the callback when the
-        // Fragment's view is destroyed, avoiding leaks.
+        // Confirm before discarding if the user has typed something
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             if (editDescription.text.isNotEmpty()) {
                 MaterialAlertDialogBuilder(requireContext())
@@ -85,7 +87,7 @@ class ReportFragment : Fragment() {
         buttonSubmit.setOnClickListener {
             val type = spinnerType.selectedItem.toString()
             val description = editDescription.text.toString().trim()
-            val severity = seekBarSeverity.progress.toFloat()
+            val severity = seekBarSeverity.progress
 
             if (description.isEmpty()) {
                 inputLayout.error = getString(R.string.error_empty_description)
@@ -94,10 +96,9 @@ class ReportFragment : Fragment() {
             }
 
             val report = TrafficReport(type, description, severity)
-            Log.d(TAG, "Report submitted — Type: $type | Severity: ${severity.toInt()}/5 | Description: $description")
+            Log.d(TAG, "Report submitted — Type: $type | Severity: $severity/5 | Description: $description")
 
-            // Pass the completed report back to DashboardFragment via the Fragment Result API,
-            // then pop this Fragment off the back stack to return to the dashboard.
+            // Send report back to DashboardFragment and pop back
             parentFragmentManager.setFragmentResult(
                 "report_result",
                 bundleOf("report" to report)

@@ -17,6 +17,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 
+/**
+ * Dashboard — shows the report list via RecyclerView, a button to file a new report,
+ * and a dark mode toggle.
+ */
 class DashboardFragment : Fragment() {
 
     companion object {
@@ -34,7 +38,7 @@ class DashboardFragment : Fragment() {
 
         viewModel = ViewModelProvider(requireActivity())[ReportListViewModel::class.java]
 
-        // Register to receive the completed report from ReportFragment.
+        // Listen for reports coming back from ReportFragment
         parentFragmentManager.setFragmentResultListener("report_result", this) { _, bundle ->
             val report = BundleCompat.getParcelable(bundle, "report", TrafficReport::class.java)
             report?.let {
@@ -67,7 +71,7 @@ class DashboardFragment : Fragment() {
         val btnToggleDark = view.findViewById<ImageButton>(R.id.button_toggle_dark_mode)
         val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_reports)
 
-        // Set up RecyclerView
+        // RecyclerView setup
         adapter = TrafficReportAdapter()
         val layoutManager = LinearLayoutManager(requireContext())
         recyclerView.layoutManager = layoutManager
@@ -81,7 +85,7 @@ class DashboardFragment : Fragment() {
             )
         }
 
-        // Observe LiveData — lifecycle-aware, updates list automatically
+        // Update the list whenever the ViewModel changes
         viewModel.reports.observe(viewLifecycleOwner) { reports ->
             adapter.submitList(reports) {
                 // Restore scroll position once the list is laid out
@@ -92,9 +96,8 @@ class DashboardFragment : Fragment() {
             }
         }
 
-        // Navigate to ReportFragment via a Fragment transaction, adding to back stack
         btnOpenReporter.setOnClickListener {
-            Log.d(TAG, "Navigating to ReportFragment via Fragment transaction")
+            Log.d(TAG, "Opening ReportFragment")
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, ReportFragment())
                 .addToBackStack("report")
@@ -142,7 +145,7 @@ class DashboardFragment : Fragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        // Save RecyclerView scroll position
+        // Persist scroll position across config changes
         view?.findViewById<RecyclerView>(R.id.recycler_reports)?.layoutManager?.let {
             outState.putParcelable(KEY_LAYOUT_STATE, it.onSaveInstanceState())
         }

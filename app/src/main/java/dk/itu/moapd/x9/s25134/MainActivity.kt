@@ -5,6 +5,10 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 
+/**
+ * Single-Activity host — just holds the fragment container.
+ * DashboardFragment is the start destination; other fragments are swapped in on top.
+ */
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -19,8 +23,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate() called")
         setContentView(R.layout.activity_main_host)
 
-        // Only add DashboardFragment on first creation — FragmentManager
-        // restores the back stack automatically on configuration changes.
+        // Skip on config change — FragmentManager restores the back stack itself
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, DashboardFragment())
@@ -28,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Applies the stored dark-mode preference before the window is created. */
+    /** Restores the user's dark mode preference from SharedPreferences. */
     private fun applyStoredTheme() {
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         if (prefs.contains(KEY_DARK_MODE)) {

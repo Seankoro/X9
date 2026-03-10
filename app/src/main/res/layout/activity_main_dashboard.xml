@@ -42,7 +42,7 @@
                 android:textColor="#FFFFFF"
                 android:textStyle="bold" />
 
-            <!-- Dark / light mode toggle — 48dp meets the minimum touch target size -->
+            <!-- Dark mode toggle -->
             <ImageButton
                 android:id="@+id/button_toggle_dark_mode"
                 android:layout_width="48dp"
@@ -64,7 +64,7 @@
 
     </LinearLayout>
 
-    <!-- ── Hero action button (overlaps header with negative margin) ── -->
+    <!-- ── Main action button (pulls up into the header via negative margin) ── -->
     <Button
         android:id="@+id/button_open_reporter"
         android:layout_width="match_parent"

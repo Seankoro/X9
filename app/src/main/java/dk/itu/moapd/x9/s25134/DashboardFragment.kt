@@ -2,35 +2,72 @@ package dk.itu.moapd.x9.s25134
 
 import android.content.res.Configuration
 import android.os.Bundle
-import android.os.Parcelable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 
 /**
- * Dashboard — shows the report list via RecyclerView, buttons to file a new report
- * or filter existing ones, and a dark mode toggle.
+ * Dashboard — shows the report list, buttons to file a new report
+ * or filter existing ones, and a dark mode toggle. Built with Jetpack Compose.
  */
 class DashboardFragment : Fragment() {
 
     companion object {
         private const val TAG = "DashboardFragment"
-        private const val KEY_LAYOUT_STATE = "recycler_layout_state"
     }
 
     private lateinit var viewModel: ReportListViewModel
-    private lateinit var adapter: TrafficReportAdapter
-    private var pendingLayoutState: Parcelable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,11 +81,8 @@ class DashboardFragment : Fragment() {
             report?.let {
                 viewModel.addReport(it)
                 Log.d(TAG, "Report received from ReportFragment: $it")
-
                 view?.let { root ->
                     Snackbar.make(root, R.string.report_submitted_toast, Snackbar.LENGTH_LONG).show()
-                    root.findViewById<RecyclerView>(R.id.recycler_reports)
-                        ?.smoothScrollToPosition(0)
                 }
             }
         }
@@ -60,75 +94,51 @@ class DashboardFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         Log.d(TAG, "onCreateView() called")
-        return inflater.inflate(R.layout.activity_main_dashboard, container, false)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        Log.d(TAG, "onViewCreated() called")
-
-        val btnOpenReporter = view.findViewById<Button>(R.id.button_open_reporter)
-        val btnOpenCompose = view.findViewById<Button>(R.id.button_open_compose_reports)
-        val btnToggleDark = view.findViewById<ImageButton>(R.id.button_toggle_dark_mode)
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_reports)
-
-        // RecyclerView setup
-        adapter = TrafficReportAdapter()
-        val layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.layoutManager = layoutManager
-        recyclerView.adapter = adapter
-        recyclerView.setHasFixedSize(true)
-
-        // Restore scroll position after a configuration change
-        savedInstanceState?.let {
-            pendingLayoutState = BundleCompat.getParcelable(
-                it, KEY_LAYOUT_STATE, Parcelable::class.java
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(
+                ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
             )
-        }
+            setContent {
+                X9ComposeTheme {
+                    DashboardScreen(
+                        viewModel = viewModel,
+                        onOpenReporter = {
+                            Log.d(TAG, "Opening ReportFragment")
+                            parentFragmentManager.beginTransaction()
+                                .replace(R.id.fragment_container, ReportFragment())
+                                .addToBackStack("report")
+                                .commit()
+                        },
+                        onOpenFilter = {
+                            Log.d(TAG, "Opening ComposeReportFragment")
+                            parentFragmentManager.beginTransaction()
+                                .replace(R.id.fragment_container, ComposeReportFragment())
+                                .addToBackStack("compose_reports")
+                                .commit()
+                        },
+                        onToggleDarkMode = {
+                            val currentlyDark = isCurrentlyInDarkMode()
+                            val newDark = !currentlyDark
 
-        // Update the list whenever the ViewModel changes
-        viewModel.reports.observe(viewLifecycleOwner) { reports ->
-            adapter.submitList(reports) {
-                // Restore scroll position once the list is laid out
-                pendingLayoutState?.let { state ->
-                    layoutManager.onRestoreInstanceState(state)
-                    pendingLayoutState = null
+                            requireActivity()
+                                .getSharedPreferences(
+                                    MainActivity.PREFS_NAME,
+                                    android.content.Context.MODE_PRIVATE
+                                )
+                                .edit()
+                                .putBoolean(MainActivity.KEY_DARK_MODE, newDark)
+                                .apply()
+
+                            Log.d(TAG, "Dark mode toggled — dark=$newDark (was $currentlyDark)")
+
+                            AppCompatDelegate.setDefaultNightMode(
+                                if (newDark) AppCompatDelegate.MODE_NIGHT_YES
+                                else AppCompatDelegate.MODE_NIGHT_NO
+                            )
+                        }
+                    )
                 }
             }
-        }
-
-        btnOpenReporter.setOnClickListener {
-            Log.d(TAG, "Opening ReportFragment")
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, ReportFragment())
-                .addToBackStack("report")
-                .commit()
-        }
-
-        btnOpenCompose.setOnClickListener {
-            Log.d(TAG, "Opening ComposeReportFragment")
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, ComposeReportFragment())
-                .addToBackStack("compose_reports")
-                .commit()
-        }
-
-        btnToggleDark.setOnClickListener {
-            val currentlyDark = isCurrentlyInDarkMode()
-            val newDark = !currentlyDark
-
-            requireActivity()
-                .getSharedPreferences(MainActivity.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-                .edit()
-                .putBoolean(MainActivity.KEY_DARK_MODE, newDark)
-                .apply()
-
-            Log.d(TAG, "Dark mode toggled — dark=$newDark (was $currentlyDark)")
-
-            AppCompatDelegate.setDefaultNightMode(
-                if (newDark) AppCompatDelegate.MODE_NIGHT_YES
-                else AppCompatDelegate.MODE_NIGHT_NO
-            )
         }
     }
 
@@ -154,10 +164,6 @@ class DashboardFragment : Fragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        // Persist scroll position across config changes
-        view?.findViewById<RecyclerView>(R.id.recycler_reports)?.layoutManager?.let {
-            outState.putParcelable(KEY_LAYOUT_STATE, it.onSaveInstanceState())
-        }
     }
 
     override fun onDestroyView() {
@@ -176,6 +182,152 @@ class DashboardFragment : Fragment() {
             AppCompatDelegate.MODE_NIGHT_NO  -> false
             else -> resources.configuration.uiMode and
                     Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        }
+    }
+}
+
+@Composable
+fun DashboardScreen(
+    viewModel: ReportListViewModel,
+    onOpenReporter: () -> Unit,
+    onOpenFilter: () -> Unit,
+    onToggleDarkMode: () -> Unit
+) {
+    val reports by viewModel.reports.observeAsState(initial = emptyList())
+    var selectedReport by remember { mutableStateOf<TrafficReport?>(null) }
+
+    // Report detail dialog
+    selectedReport?.let { report ->
+        ReportDetailDialog(
+            report = report,
+            onDismiss = { selectedReport = null }
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Header band
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.primary
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 40.dp, bottom = 28.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_traffic_alert),
+                        contentDescription = "Traffic alert icon",
+                        modifier = Modifier
+                            .size(34.dp)
+                            .padding(end = 12.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Text(
+                        text = "X9",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = onToggleDarkMode) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_dark_mode_toggle),
+                            contentDescription = "Toggle dark mode",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Community traffic reporting",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                )
+            }
+        }
+
+        // Action button (overlaps header with negative offset)
+        Button(
+            onClick = onOpenReporter,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .offset(y = (-28).dp)
+                .height(56.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+        ) {
+            Text(
+                text = "Report an Incident",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        // Filter button
+        Button(
+            onClick = onOpenFilter,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .offset(y = (-20).dp)
+                .height(48.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text(
+                text = "Filter Reports",
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+
+        // Section label
+        Text(
+            text = "TRAFFIC REPORTS",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(start = 20.dp, end = 20.dp)
+                .offset(y = (-8).dp),
+            letterSpacing = 0.1.sp
+        )
+
+        // Report list with swipe-to-delete and click-to-view
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(y = (-4).dp),
+            contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp)
+        ) {
+            items(
+                items = reports,
+                key = { report -> "${report.type}_${report.description}_${report.severity}" }
+            ) { report ->
+                SwipeToDeleteContainer(
+                    onDelete = { viewModel.removeReport(report) }
+                ) {
+                    TrafficReportCard(
+                        report = report,
+                        onClick = { selectedReport = report }
+                    )
+                }
+            }
         }
     }
 }

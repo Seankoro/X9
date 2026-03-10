@@ -5,11 +5,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -22,16 +25,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -181,11 +190,22 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
 
     var selectedFilter by remember { mutableStateOf("All") }
 
+    // Track which report the user tapped to show in a dialog
+    var selectedReport by remember { mutableStateOf<TrafficReport?>(null) }
+
     val filterOptions = listOf("All", "Speed Camera", "Heavy Traffic", "Accident", "Road Work")
 
     val filteredReports = remember(reports, selectedFilter) {
         if (selectedFilter == "All") reports
         else reports.filter { it.type == selectedFilter }
+    }
+
+    // Report detail dialog
+    selectedReport?.let { report ->
+        ReportDetailDialog(
+            report = report,
+            onDismiss = { selectedReport = null }
+        )
     }
 
     Column(
@@ -256,7 +276,7 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
             modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp)
         )
 
-        // Report list
+        // Report list with swipe-to-delete
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp)
@@ -265,14 +285,135 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
                 items = filteredReports,
                 key = { report -> "${report.type}_${report.description}_${report.severity}" }
             ) { report ->
-                TrafficReportCard(report = report)
+                SwipeToDeleteContainer(
+                    onDelete = { viewModel.removeReport(report) }
+                ) {
+                    TrafficReportCard(
+                        report = report,
+                        onClick = { selectedReport = report }
+                    )
+                }
             }
         }
     }
 }
 
+/**
+ * Wraps a composable in a swipe-to-dismiss container.
+ * Swiping from right to left reveals a red background and deletes the item.
+ */
 @Composable
-fun TrafficReportCard(report: TrafficReport) {
+fun SwipeToDeleteContainer(
+    onDelete: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState()
+
+    // Trigger delete when the user completes the swipe
+    if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+        LaunchedEffect(dismissState) {
+            onDelete()
+        }
+    }
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            val color by animateColorAsState(
+                targetValue = when (dismissState.targetValue) {
+                    SwipeToDismissBoxValue.EndToStart -> Color(0xFFEF4444)
+                    else -> Color.Transparent
+                },
+                label = "swipe-bg"
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color)
+                    .padding(end = 24.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                    Text(
+                        text = "Delete",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        },
+        // Only allow right-to-left swipe
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true,
+        content = { content() }
+    )
+}
+
+/**
+ * Dialog showing full details of a tapped report.
+ */
+@Composable
+fun ReportDetailDialog(report: TrafficReport, onDismiss: () -> Unit) {
+    val severityLabel = when {
+        report.severity <= 2 -> "Low"
+        report.severity <= 3 -> "Medium"
+        else -> "High"
+    }
+    val severityColor = when {
+        report.severity <= 2 -> SeverityLow
+        report.severity <= 3 -> SeverityMedium
+        else -> SeverityHigh
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = report.type,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = report.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Severity:",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = severityColor
+                    ) {
+                        Text(
+                            text = "$severityLabel (${report.severity}/5)",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+fun TrafficReportCard(report: TrafficReport, onClick: () -> Unit = {}) {
     val severityLabel = when {
         report.severity <= 2 -> "Low"
         report.severity <= 3 -> "Medium"
@@ -287,7 +428,8 @@ fun TrafficReportCard(report: TrafficReport) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 5.dp),
+            .padding(horizontal = 16.dp, vertical = 5.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

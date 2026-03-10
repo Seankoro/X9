@@ -31,4 +31,9 @@ class ReportListViewModel : ViewModel() {
         val current = _reports.value.orEmpty()
         _reports.value = listOf(report) + current
     }
+
+    fun removeReport(report: TrafficReport) {
+        val current = _reports.value.orEmpty()
+        _reports.value = current - report
+    }
 }

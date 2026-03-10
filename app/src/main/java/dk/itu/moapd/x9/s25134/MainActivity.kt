@@ -10,15 +10,20 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
+/**
+ * Main screen for submitting traffic reports.
+ * Users pick a report type, describe the situation, and set a severity level.
+ * Reports are stored in memory only — nothing persists across sessions for now.
+ */
 class MainActivity : AppCompatActivity() {
 
-    // Requirement: Use the android logging system
     private val TAG = "TrafficReportActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Form inputs
         val spinnerType = findViewById<Spinner>(R.id.spinner_report_type)
         val editDescription = findViewById<EditText>(R.id.edit_text_description)
         val seekBarSeverity = findViewById<SeekBar>(R.id.seek_bar_severity)
@@ -27,42 +32,38 @@ class MainActivity : AppCompatActivity() {
         val inputLayout = findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.input_layout_description)
 
         buttonSubmit.setOnClickListener {
-            // Read Values
             val type = spinnerType.selectedItem.toString()
             val description = editDescription.text.toString().trim()
             val severity = seekBarSeverity.progress
 
-            // Requirement: Validate user input / Prevent empty submissions
+            // Don't allow empty descriptions
             if (description.isEmpty()) {
                 inputLayout.error = getString(R.string.error_empty_description)
                 return@setOnClickListener
             } else {
-                // Clear the error if input is valid
                 inputLayout.error = null
             }
 
-            // Requirement: Process the data (Stored in memory as an object)
-            val report = TrafficReport(type, description, severity.toFloat())
+            val report = TrafficReport(type, description, severity)
 
-            // Requirement: Use logging system to output summary
+            // Log report to Logcat for debugging
             Log.d(TAG, "--- Traffic Report Summary ---")
             Log.d(TAG, "Type: ${report.type}")
-            Log.d(TAG, "Severity: ${report.severity.toInt()}")
+            Log.d(TAG, "Severity: ${report.severity}")
             Log.d(TAG, "Description: ${report.description}")
             Log.d(TAG, "------------------------------")
 
-            // Display result in UI using string resources with placeholders
+            // Show the submitted report on screen
             val summaryText = getString(R.string.summary_header) + "\n" +
                     getString(R.string.summary_type, report.type) + "\n" +
-                    getString(R.string.summary_severity, report.severity.toInt()) + "\n" +
+                    getString(R.string.summary_severity, report.severity) + "\n" +
                     getString(R.string.summary_description, report.description)
 
             textOutput.text = summaryText
 
-            // Success feedback
             Toast.makeText(this, R.string.report_submitted_toast, Toast.LENGTH_SHORT).show()
 
-            // Clear input for next entry
+            // Reset form for the next report
             editDescription.text.clear()
             seekBarSeverity.progress = 0
         }

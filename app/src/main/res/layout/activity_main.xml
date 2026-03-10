@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:padding="24dp">
 
-            <!-- Title -->
+            <!-- Header -->
             <TextView
                 android:id="@+id/title_text"
                 android:layout_width="wrap_content"
@@ -33,7 +33,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <!-- Report Type Label -->
+            <!-- Report type dropdown -->
             <TextView
                 android:id="@+id/label_type"
                 android:layout_width="wrap_content"
@@ -44,7 +44,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/title_text" />
 
-            <!-- Spinner -->
             <Spinner
                 android:id="@+id/spinner_report_type"
                 android:layout_width="0dp"
@@ -55,7 +54,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/label_type" />
 
-            <!-- FIX: Added app:layout_constraintWidth_max to prevent "Too Wide" error -->
+            <!-- Description field, capped at 488dp so it doesn't stretch on tablets -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/input_layout_description"
                 android:layout_width="0dp"
@@ -77,6 +76,7 @@
                     android:minHeight="48dp" />
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Severity slider (0–5) -->
             <TextView
                 android:id="@+id/label_severity"
                 android:layout_width="wrap_content"
@@ -98,8 +98,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/label_severity" />
 
-            <!-- FIX: Changed width to wrap_content and used constraints to center,
-                 preventing the "Button is too wide" warning -->
+            <!-- Submit -->
             <Button
                 android:id="@+id/button_submit"
                 android:layout_width="wrap_content"
@@ -112,7 +111,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/seek_bar_severity" />
 
-            <!-- FIX: Changed textColor to black for accessibility contrast -->
+            <!-- Summary box — shows the last submitted report -->
             <TextView
                 android:id="@+id/text_view_output"
                 android:layout_width="0dp"

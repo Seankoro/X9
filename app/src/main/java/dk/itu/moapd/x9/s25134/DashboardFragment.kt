@@ -2,46 +2,53 @@ package dk.itu.moapd.x9.s25134
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Parcelable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 
 /**
- * Dashboard — shows the latest submitted report, a button to file a new one,
+ * Dashboard — shows the report list via RecyclerView, a button to file a new report,
  * and a dark mode toggle.
  */
 class DashboardFragment : Fragment() {
 
     companion object {
         private const val TAG = "DashboardFragment"
+        private const val KEY_LAYOUT_STATE = "recycler_layout_state"
     }
+
+    private lateinit var viewModel: ReportListViewModel
+    private lateinit var adapter: TrafficReportAdapter
+    private var pendingLayoutState: Parcelable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() called")
 
+        viewModel = ViewModelProvider(requireActivity())[ReportListViewModel::class.java]
+
         // Listen for reports coming back from ReportFragment
         parentFragmentManager.setFragmentResultListener("report_result", this) { _, bundle ->
             val report = BundleCompat.getParcelable(bundle, "report", TrafficReport::class.java)
             report?.let {
-                val summary = getString(R.string.summary_header) + "\n" +
-                        getString(R.string.summary_type, it.type) + "\n" +
-                        getString(R.string.summary_severity, it.severity) + "\n" +
-                        getString(R.string.summary_description, it.description)
-
-                view?.findViewById<TextView>(R.id.text_view_main_output)?.text = summary
+                viewModel.addReport(it)
                 Log.d(TAG, "Report received from ReportFragment: $it")
 
                 view?.let { root ->
                     Snackbar.make(root, R.string.report_submitted_toast, Snackbar.LENGTH_LONG).show()
+                    root.findViewById<RecyclerView>(R.id.recycler_reports)
+                        ?.smoothScrollToPosition(0)
                 }
             }
         }
@@ -62,6 +69,32 @@ class DashboardFragment : Fragment() {
 
         val btnOpenReporter = view.findViewById<Button>(R.id.button_open_reporter)
         val btnToggleDark = view.findViewById<ImageButton>(R.id.button_toggle_dark_mode)
+        val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_reports)
+
+        // RecyclerView setup
+        adapter = TrafficReportAdapter()
+        val layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.layoutManager = layoutManager
+        recyclerView.adapter = adapter
+        recyclerView.setHasFixedSize(true)
+
+        // Restore scroll position after a configuration change
+        savedInstanceState?.let {
+            pendingLayoutState = BundleCompat.getParcelable(
+                it, KEY_LAYOUT_STATE, Parcelable::class.java
+            )
+        }
+
+        // Update the list whenever the ViewModel changes
+        viewModel.reports.observe(viewLifecycleOwner) { reports ->
+            adapter.submitList(reports) {
+                // Restore scroll position once the list is laid out
+                pendingLayoutState?.let { state ->
+                    layoutManager.onRestoreInstanceState(state)
+                    pendingLayoutState = null
+                }
+            }
+        }
 
         btnOpenReporter.setOnClickListener {
             Log.d(TAG, "Opening ReportFragment")
@@ -108,6 +141,14 @@ class DashboardFragment : Fragment() {
     override fun onStop() {
         super.onStop()
         Log.d(TAG, "onStop() called")
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        // Persist scroll position across config changes
+        view?.findViewById<RecyclerView>(R.id.recycler_reports)?.layoutManager?.let {
+            outState.putParcelable(KEY_LAYOUT_STATE, it.onSaveInstanceState())
+        }
     }
 
     override fun onDestroyView() {

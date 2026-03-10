@@ -15,6 +15,7 @@
     <string name="header_icon_desc">Traffic alert icon</string>
     <string name="btn_toggle_dark_mode">Toggle dark mode</string>
     <string name="section_latest_report">LATEST REPORT</string>
+    <string name="section_traffic_reports">TRAFFIC REPORTS</string>
     <string name="card_report_header">Traffic Summary</string>
     <string name="severity_label_low">Low</string>
     <string name="severity_label_medium">Medium</string>

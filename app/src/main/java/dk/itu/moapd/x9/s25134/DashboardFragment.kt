@@ -18,8 +18,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 
 /**
- * Dashboard — shows the report list via RecyclerView, a button to file a new report,
- * and a dark mode toggle.
+ * Dashboard — shows the report list via RecyclerView, buttons to file a new report
+ * or filter existing ones, and a dark mode toggle.
  */
 class DashboardFragment : Fragment() {
 
@@ -68,6 +68,7 @@ class DashboardFragment : Fragment() {
         Log.d(TAG, "onViewCreated() called")
 
         val btnOpenReporter = view.findViewById<Button>(R.id.button_open_reporter)
+        val btnOpenCompose = view.findViewById<Button>(R.id.button_open_compose_reports)
         val btnToggleDark = view.findViewById<ImageButton>(R.id.button_toggle_dark_mode)
         val recyclerView = view.findViewById<RecyclerView>(R.id.recycler_reports)
 
@@ -101,6 +102,14 @@ class DashboardFragment : Fragment() {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, ReportFragment())
                 .addToBackStack("report")
+                .commit()
+        }
+
+        btnOpenCompose.setOnClickListener {
+            Log.d(TAG, "Opening ComposeReportFragment")
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, ComposeReportFragment())
+                .addToBackStack("compose_reports")
                 .commit()
         }
 

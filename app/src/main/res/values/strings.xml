@@ -12,6 +12,7 @@
     <string name="error_empty_description">Description cannot be empty!</string>
     <string name="report_submitted_toast">Report processed and logged.</string>
     <string name="btn_create_report">Report an Incident</string>
+    <string name="btn_compose_reports">Filter Reports</string>
     <string name="header_icon_desc">Traffic alert icon</string>
     <string name="btn_toggle_dark_mode">Toggle dark mode</string>
     <string name="section_latest_report">LATEST REPORT</string>

@@ -49,11 +49,15 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
-// Severity color constants matching colors.xml
+// Severity colors (matching colors.xml)
 private val SeverityLow = Color(0xFF22C55E)
 private val SeverityMedium = Color(0xFFF59E0B)
 private val SeverityHigh = Color(0xFFEF4444)
 
+/**
+ * Filter Reports screen — lets users narrow down the report list by type
+ * using filter chips. Built with Jetpack Compose.
+ */
 class ComposeReportFragment : Fragment() {
 
     companion object {
@@ -269,15 +273,14 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
 
 @Composable
 fun TrafficReportCard(report: TrafficReport) {
-    val severityInt = report.severity.toInt()
     val severityLabel = when {
-        severityInt <= 2 -> "Low"
-        severityInt <= 3 -> "Medium"
+        report.severity <= 2 -> "Low"
+        report.severity <= 3 -> "Medium"
         else -> "High"
     }
     val severityColor = when {
-        severityInt <= 2 -> SeverityLow
-        severityInt <= 3 -> SeverityMedium
+        report.severity <= 2 -> SeverityLow
+        report.severity <= 3 -> SeverityMedium
         else -> SeverityHigh
     }
 
@@ -309,7 +312,7 @@ fun TrafficReportCard(report: TrafficReport) {
                     color = severityColor
                 ) {
                     Text(
-                        text = "$severityLabel (${severityInt}/5)",
+                        text = "$severityLabel (${report.severity}/5)",
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)

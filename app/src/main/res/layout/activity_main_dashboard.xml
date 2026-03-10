@@ -82,70 +82,28 @@
         app:cornerRadius="28dp"
         android:textColor="?attr/colorOnSecondary" />
 
-    <!-- ── Body content ─────────────────────────────────────────── -->
-    <LinearLayout
-        android:layout_width="match_parent"
+    <!-- ── Section label ─────────────────────────────────────────── -->
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="36dp"
+        android:text="@string/section_traffic_reports"
+        android:textAppearance="?attr/textAppearanceLabelMedium"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:letterSpacing="0.1"
         android:paddingStart="20dp"
-        android:paddingEnd="20dp">
+        android:paddingEnd="20dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="10dp" />
 
-        <!-- Section label -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/section_latest_report"
-            android:textAppearance="?attr/textAppearanceLabelMedium"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="10dp" />
-
-        <!-- Report summary card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/card_latest_report"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="?attr/colorOutlineVariant"
-            app:cardBackgroundColor="?attr/colorSurface">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <!-- Card header: compound drawable replaces LinearLayout+ImageView+TextView -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/card_report_header"
-                    android:textAppearance="?attr/textAppearanceTitleSmall"
-                    android:textColor="?attr/colorPrimary"
-                    android:textStyle="bold"
-                    app:drawableStartCompat="@drawable/ic_traffic_alert"
-                    android:drawablePadding="8dp"
-                    app:drawableTint="?attr/colorPrimary"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="10dp" />
-
-                <!-- Report summary text -->
-                <TextView
-                    android:id="@+id/text_view_main_output"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/no_report_data"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:lineSpacingMultiplier="1.4"
-                    android:freezesText="true" />
-
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-    </LinearLayout>
+    <!-- ── Report list ────────────────────────────────────────────── -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_reports"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingTop="4dp"
+        android:paddingBottom="16dp"
+        android:scrollbars="vertical" />
 
 </LinearLayout>

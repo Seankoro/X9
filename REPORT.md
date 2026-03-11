@@ -22,7 +22,7 @@ The dashboard is the landing screen. A header band displays the app name and a d
 
 ### Report Form
 
-The report form lets users submit a new traffic incident. A dropdown selects the report type (e.g. Speed Camera, Accident, Heavy Traffic, Road Work). A text field captures a description, with validation that blocks submission if the field is empty. A severity slider (1–5) is paired with a colour-coded chip that updates in real time. Pressing submit returns the user to the dashboard with the new report visible. If the user presses back with unsaved input, a confirmation dialog asks whether to discard changes.
+The report form lets users submit a new traffic incident. A dropdown selects the report type (e.g. Speed Camera, Accident, Heavy Traffic, Road Work). A text field captures a description, with validation that blocks submission if the field is empty. A severity slider (1–5) is paired with a color-coded chip that updates in real time. Pressing submit returns the user to the dashboard with the new report visible. If the user presses back with unsaved input, a confirmation dialog asks whether to discard changes.
 
 ![Validation Error](validation-error.png){height=5cm}
 
@@ -48,7 +48,7 @@ Beyond the core requirements, the following extensions were implemented:
 
 ## 4. Testing and Evaluation
 
-Testing was carried out manually on the Android emulator across a range of scenarios:
+Due to time constraints, instead of adopting test-driven development with automated unit tests, smoke tests was conducted manually upon each iteration to the application. In these smoke tests, we manually click through the core features of the application to make sure it is functioning as intended.
 
 - **Form validation** -Submitting with an empty description is blocked and shows an error. The error clears when the user starts typing.
 - **Navigation flow** -Moving from the dashboard to the report form, submitting a report, and returning to the dashboard correctly displays the new report in the list.
@@ -61,7 +61,7 @@ Testing was carried out manually on the Android emulator across a range of scena
 
 ## 5. Problems Encountered
 
-1. **Fragment back-stack conflicts** -Early versions suffered from duplicate Fragment instances and unexpected back-button behaviour. The issue was traced to inconsistent use of `addToBackStack()`. Adding named back-stack tags to each transaction resolved the duplicates and gave predictable navigation.
+1. **Fragment back-stack conflicts** -Early versions suffered from duplicate Fragment instances and unexpected back-button behavior. The issue was traced to inconsistent use of `addToBackStack()`. Adding named back-stack tags to each transaction resolved the duplicates and gave predictable navigation.
 
 2. **Data loss on configuration change** -Rotating the device wiped the report list in versions before V4, because data was held directly in the Fragment. Introducing `ReportListViewModel` scoped to the Activity solved this, as the ViewModel survives configuration changes automatically.
 

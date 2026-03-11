@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -32,7 +31,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -52,7 +50,6 @@ import androidx.fragment.app.Fragment
 /**
  * Form for creating a new traffic report.
  * Sends the result back to DashboardFragment via the Fragment Result API.
- * Built with Jetpack Compose.
  */
 class ReportFragment : Fragment() {
 
@@ -100,7 +97,7 @@ class ReportFragment : Fragment() {
                     ReportFormScreen(
                         onDescriptionChanged = { hasInput = it.isNotEmpty() },
                         onSubmit = { type, description, severity ->
-                            Log.d(TAG, "Report submitted — Type: $type | Severity: $severity/5 | Description: $description")
+                            Log.d(TAG, "Report submitted - Type: $type | Severity: $severity/5 | Description: $description")
                             val report = TrafficReport(type, description, severity)
                             parentFragmentManager.setFragmentResult(
                                 "report_result",
@@ -145,10 +142,6 @@ class ReportFragment : Fragment() {
     }
 }
 
-private val SeverityLow = Color(0xFF22C55E)
-private val SeverityMedium = Color(0xFFF59E0B)
-private val SeverityHigh = Color(0xFFEF4444)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportFormScreen(
@@ -164,16 +157,7 @@ fun ReportFormScreen(
     var typeDropdownExpanded by remember { mutableStateOf(false) }
 
     val severityInt = severity.toInt()
-    val severityLabel = when {
-        severityInt <= 2 -> "Low"
-        severityInt <= 3 -> "Medium"
-        else -> "High"
-    }
-    val severityColor = when {
-        severityInt <= 2 -> SeverityLow
-        severityInt <= 3 -> SeverityMedium
-        else -> SeverityHigh
-    }
+    val (_, severityColor) = severityInfo(severityInt)
 
     Column(
         modifier = Modifier

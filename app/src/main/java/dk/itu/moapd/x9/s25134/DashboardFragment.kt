@@ -7,10 +7,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.animation.animateColorAsState
+import androidx.core.content.edit
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,28 +22,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
@@ -58,8 +48,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
 
 /**
- * Dashboard — shows the report list, buttons to file a new report
- * or filter existing ones, and a dark mode toggle. Built with Jetpack Compose.
+ * Dashboard - shows the report list, buttons to file a new report
+ * or filter existing ones, and a dark mode toggle.
  */
 class DashboardFragment : Fragment() {
 
@@ -125,11 +115,11 @@ class DashboardFragment : Fragment() {
                                     MainActivity.PREFS_NAME,
                                     android.content.Context.MODE_PRIVATE
                                 )
-                                .edit()
-                                .putBoolean(MainActivity.KEY_DARK_MODE, newDark)
-                                .apply()
+                                .edit {
+                                    putBoolean(MainActivity.KEY_DARK_MODE, newDark)
+                                }
 
-                            Log.d(TAG, "Dark mode toggled — dark=$newDark (was $currentlyDark)")
+                            Log.d(TAG, "Dark mode toggled - dark=$newDark (was $currentlyDark)")
 
                             AppCompatDelegate.setDefaultNightMode(
                                 if (newDark) AppCompatDelegate.MODE_NIGHT_YES
@@ -162,10 +152,6 @@ class DashboardFragment : Fragment() {
         Log.d(TAG, "onStop() called")
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         Log.d(TAG, "onDestroyView() called")
@@ -176,6 +162,7 @@ class DashboardFragment : Fragment() {
         Log.d(TAG, "onDestroy() called")
     }
 
+    // checks the AppCompat night mode first, falls back to the system setting
     private fun isCurrentlyInDarkMode(): Boolean {
         return when (AppCompatDelegate.getDefaultNightMode()) {
             AppCompatDelegate.MODE_NIGHT_YES -> true
@@ -194,13 +181,13 @@ fun DashboardScreen(
     onToggleDarkMode: () -> Unit
 ) {
     val reports by viewModel.reports.observeAsState(initial = emptyList())
-    var selectedReport by remember { mutableStateOf<TrafficReport?>(null) }
+    val selectedReport = remember { mutableStateOf<TrafficReport?>(null) }
 
     // Report detail dialog
-    selectedReport?.let { report ->
+    selectedReport.value?.let { report ->
         ReportDetailDialog(
             report = report,
-            onDismiss = { selectedReport = null }
+            onDismiss = { selectedReport.value = null }
         )
     }
 
@@ -324,7 +311,7 @@ fun DashboardScreen(
                 ) {
                     TrafficReportCard(
                         report = report,
-                        onClick = { selectedReport = report }
+                        onClick = { selectedReport.value = report }
                     )
                 }
             }

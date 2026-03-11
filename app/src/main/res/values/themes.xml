@@ -1,28 +1,23 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.X9" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Primary: navigation blue -->
-        <item name="colorPrimary">@color/waze_blue</item>
-        <item name="colorOnPrimary">@color/waze_blue_on</item>
-        <item name="colorPrimaryContainer">@color/waze_blue_container</item>
-        <item name="colorOnPrimaryContainer">@color/waze_blue_container_on</item>
-        <!-- Secondary: amber alert -->
-        <item name="colorSecondary">@color/waze_amber</item>
-        <item name="colorOnSecondary">@color/waze_amber_on</item>
-        <item name="colorSecondaryContainer">@color/waze_amber_container</item>
-        <item name="colorOnSecondaryContainer">@color/waze_amber_container_on</item>
-        <!-- Surfaces -->
-        <item name="android:colorBackground">@color/waze_background</item>
-        <item name="colorOnBackground">@color/waze_background_on</item>
-        <item name="colorSurface">@color/waze_surface</item>
-        <item name="colorOnSurface">@color/waze_surface_on</item>
-        <item name="colorSurfaceVariant">@color/waze_surface_variant</item>
-        <item name="colorOnSurfaceVariant">@color/waze_surface_variant_on</item>
-        <item name="colorOutline">@color/waze_outline</item>
-        <item name="colorOutlineVariant">@color/waze_outline_variant</item>
-        <!-- Error -->
-        <item name="colorError">@color/waze_error</item>
-        <item name="colorOnError">@color/waze_error_on</item>
-        <!-- Status bar stays white in light mode; dark icons on white background -->
+        <item name="colorPrimary">@color/x9_blue</item>
+        <item name="colorOnPrimary">@color/x9_blue_on</item>
+        <item name="colorPrimaryContainer">@color/x9_blue_container</item>
+        <item name="colorOnPrimaryContainer">@color/x9_blue_container_on</item>
+        <item name="colorSecondary">@color/x9_amber</item>
+        <item name="colorOnSecondary">@color/x9_amber_on</item>
+        <item name="colorSecondaryContainer">@color/x9_amber_container</item>
+        <item name="colorOnSecondaryContainer">@color/x9_amber_container_on</item>
+        <item name="android:colorBackground">@color/x9_background</item>
+        <item name="colorOnBackground">@color/x9_background_on</item>
+        <item name="colorSurface">@color/x9_surface</item>
+        <item name="colorOnSurface">@color/x9_surface_on</item>
+        <item name="colorSurfaceVariant">@color/x9_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/x9_surface_variant_on</item>
+        <item name="colorOutline">@color/x9_outline</item>
+        <item name="colorOutlineVariant">@color/x9_outline_variant</item>
+        <item name="colorError">@color/x9_error</item>
+        <item name="colorOnError">@color/x9_error_on</item>
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>

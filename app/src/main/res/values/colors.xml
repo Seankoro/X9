@@ -1,60 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- ── Light mode ─────────────────────────────────────────────── -->
-    <!-- Primary: deep navigation blue -->
-    <color name="waze_blue">#1A56DB</color>
-    <color name="waze_blue_on">#FFFFFF</color>
-    <color name="waze_blue_container">#D6E4FF</color>
-    <color name="waze_blue_container_on">#00297A</color>
+    <!-- Light mode -->
+    <color name="x9_blue">#1A56DB</color>
+    <color name="x9_blue_on">#FFFFFF</color>
+    <color name="x9_blue_container">#D6E4FF</color>
+    <color name="x9_blue_container_on">#00297A</color>
 
-    <!-- Secondary: amber alert accent -->
-    <color name="waze_amber">#F5A623</color>
-    <color name="waze_amber_on">#1C1400</color>
-    <color name="waze_amber_container">#FFECD1</color>
-    <color name="waze_amber_container_on">#2A1800</color>
+    <color name="x9_amber">#F5A623</color>
+    <color name="x9_amber_on">#1C1400</color>
+    <color name="x9_amber_container">#FFECD1</color>
+    <color name="x9_amber_container_on">#2A1800</color>
 
-    <!-- Surfaces -->
-    <color name="waze_background">#F8F9FF</color>
-    <color name="waze_background_on">#191C20</color>
-    <color name="waze_surface">#FFFFFF</color>
-    <color name="waze_surface_on">#191C20</color>
-    <color name="waze_surface_variant">#E1E6F4</color>
-    <color name="waze_surface_variant_on">#44485A</color>
-    <color name="waze_outline">#74788A</color>
-    <color name="waze_outline_variant">#C4C8DA</color>
+    <color name="x9_background">#F8F9FF</color>
+    <color name="x9_background_on">#191C20</color>
+    <color name="x9_surface">#FFFFFF</color>
+    <color name="x9_surface_on">#191C20</color>
+    <color name="x9_surface_variant">#E1E6F4</color>
+    <color name="x9_surface_variant_on">#44485A</color>
+    <color name="x9_outline">#74788A</color>
+    <color name="x9_outline_variant">#C4C8DA</color>
 
-    <!-- Error -->
-    <color name="waze_error">#BA1A1A</color>
-    <color name="waze_error_on">#FFFFFF</color>
+    <color name="x9_error">#BA1A1A</color>
+    <color name="x9_error_on">#FFFFFF</color>
 
-    <!-- ── Dark mode ───────────────────────────────────────────────── -->
-    <color name="waze_blue_night">#A8C4FF</color>
-    <color name="waze_blue_on_night">#003180</color>
-    <color name="waze_blue_container_night">#0040A8</color>
-    <color name="waze_blue_container_on_night">#D6E4FF</color>
+    <!-- Dark mode -->
+    <color name="x9_blue_night">#A8C4FF</color>
+    <color name="x9_blue_on_night">#003180</color>
+    <color name="x9_blue_container_night">#0040A8</color>
+    <color name="x9_blue_container_on_night">#D6E4FF</color>
 
-    <color name="waze_amber_night">#FFB94A</color>
-    <color name="waze_amber_on_night">#3B2000</color>
-    <color name="waze_amber_container_night">#593100</color>
-    <color name="waze_amber_container_on_night">#FFDDB3</color>
+    <color name="x9_amber_night">#FFB94A</color>
+    <color name="x9_amber_on_night">#3B2000</color>
+    <color name="x9_amber_container_night">#593100</color>
+    <color name="x9_amber_container_on_night">#FFDDB3</color>
 
-    <color name="waze_background_night">#101318</color>
-    <color name="waze_background_on_night">#E1E3EC</color>
-    <color name="waze_surface_night">#191C20</color>
-    <color name="waze_surface_on_night">#E1E3EC</color>
-    <color name="waze_surface_variant_night">#44485A</color>
-    <color name="waze_surface_variant_on_night">#C4C8DA</color>
-    <color name="waze_outline_night">#8E92A4</color>
-    <color name="waze_outline_variant_night">#44485A</color>
-
-    <!-- ── Severity indicators (theme-neutral) ────────────────────── -->
-    <color name="severity_low">#22C55E</color>
-    <color name="severity_medium">#F59E0B</color>
-    <color name="severity_high">#EF4444</color>
-
-    <!-- ── Header band ─────────────────────────────────────────────── -->
-    <color name="header_band_bg">#1A56DB</color>
-    <color name="header_band_bg_night">#0D3494</color>
+    <color name="x9_background_night">#101318</color>
+    <color name="x9_background_on_night">#E1E3EC</color>
+    <color name="x9_surface_night">#191C20</color>
+    <color name="x9_surface_on_night">#E1E3EC</color>
+    <color name="x9_surface_variant_night">#44485A</color>
+    <color name="x9_surface_variant_on_night">#C4C8DA</color>
+    <color name="x9_outline_night">#8E92A4</color>
+    <color name="x9_outline_variant_night">#44485A</color>
 
 </resources>

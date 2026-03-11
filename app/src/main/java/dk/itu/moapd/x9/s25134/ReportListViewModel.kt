@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 /**
- * Holds the list of traffic reports in memory. Scoped to the Activity so it
+ * Holds the list of traffic reports in memory, scoped to the Activity so it
  * survives fragment transactions but not process death.
  */
 class ReportListViewModel : ViewModel() {

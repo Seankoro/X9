@@ -58,14 +58,21 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
-// Severity colors (matching colors.xml)
-private val SeverityLow = Color(0xFF22C55E)
-private val SeverityMedium = Color(0xFFF59E0B)
-private val SeverityHigh = Color(0xFFEF4444)
+// green / amber / red used for the severity chips across all screens
+val SeverityLow = Color(0xFF22C55E)
+val SeverityMedium = Color(0xFFF59E0B)
+val SeverityHigh = Color(0xFFEF4444)
+
+// maps a severity int (1-5) to its display label + color
+fun severityInfo(level: Int): Pair<String, Color> = when {
+    level <= 2 -> "Low" to SeverityLow
+    level <= 3 -> "Medium" to SeverityMedium
+    else       -> "High" to SeverityHigh
+}
 
 /**
- * Filter Reports screen — lets users narrow down the report list by type
- * using filter chips. Built with Jetpack Compose.
+ * Filter Reports screen - lets users narrow down the report list by type
+ * using filter chips.
  */
 class ComposeReportFragment : Fragment() {
 
@@ -130,6 +137,7 @@ class ComposeReportFragment : Fragment() {
     }
 }
 
+// mirrors the XML theme (Theme.X9) so Compose screens get the same colors
 @Composable
 fun X9ComposeTheme(content: @Composable () -> Unit) {
     val darkTheme = isSystemInDarkTheme()
@@ -190,8 +198,7 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
 
     var selectedFilter by remember { mutableStateOf("All") }
 
-    // Track which report the user tapped to show in a dialog
-    var selectedReport by remember { mutableStateOf<TrafficReport?>(null) }
+    val selectedReport = remember { mutableStateOf<TrafficReport?>(null) }
 
     val filterOptions = listOf("All", "Speed Camera", "Heavy Traffic", "Accident", "Road Work")
 
@@ -201,10 +208,10 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
     }
 
     // Report detail dialog
-    selectedReport?.let { report ->
+    selectedReport.value?.let { report ->
         ReportDetailDialog(
             report = report,
-            onDismiss = { selectedReport = null }
+            onDismiss = { selectedReport.value = null }
         )
     }
 
@@ -290,7 +297,7 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
                 ) {
                     TrafficReportCard(
                         report = report,
-                        onClick = { selectedReport = report }
+                        onClick = { selectedReport.value = report }
                     )
                 }
             }
@@ -299,8 +306,8 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
 }
 
 /**
- * Wraps a composable in a swipe-to-dismiss container.
- * Swiping from right to left reveals a red background and deletes the item.
+ * Swipe-to-dismiss container. Swiping right to left reveals a red
+ * background and deletes the item.
  */
 @Composable
 fun SwipeToDeleteContainer(
@@ -350,21 +357,10 @@ fun SwipeToDeleteContainer(
     )
 }
 
-/**
- * Dialog showing full details of a tapped report.
- */
+/** Dialog showing full details of a tapped report. */
 @Composable
 fun ReportDetailDialog(report: TrafficReport, onDismiss: () -> Unit) {
-    val severityLabel = when {
-        report.severity <= 2 -> "Low"
-        report.severity <= 3 -> "Medium"
-        else -> "High"
-    }
-    val severityColor = when {
-        report.severity <= 2 -> SeverityLow
-        report.severity <= 3 -> SeverityMedium
-        else -> SeverityHigh
-    }
+    val (severityLabel, severityColor) = severityInfo(report.severity)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -414,16 +410,7 @@ fun ReportDetailDialog(report: TrafficReport, onDismiss: () -> Unit) {
 
 @Composable
 fun TrafficReportCard(report: TrafficReport, onClick: () -> Unit = {}) {
-    val severityLabel = when {
-        report.severity <= 2 -> "Low"
-        report.severity <= 3 -> "Medium"
-        else -> "High"
-    }
-    val severityColor = when {
-        report.severity <= 2 -> SeverityLow
-        report.severity <= 3 -> SeverityMedium
-        else -> SeverityHigh
-    }
+    val (severityLabel, severityColor) = severityInfo(report.severity)
 
     Card(
         modifier = Modifier

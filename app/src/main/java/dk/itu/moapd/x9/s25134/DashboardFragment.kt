@@ -14,10 +14,7 @@ import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 
-/**
- * Dashboard — shows the latest submitted report, a button to file a new one,
- * and a dark mode toggle.
- */
+// Dashboard — report list, new-report button, dark mode toggle
 class DashboardFragment : Fragment() {
 
     companion object {

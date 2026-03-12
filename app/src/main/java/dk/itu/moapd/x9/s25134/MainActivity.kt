@@ -10,11 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
-/**
- * Main screen for submitting traffic reports.
- * Users pick a report type, describe the situation, and set a severity level.
- * Reports are stored in memory only — nothing persists across sessions for now.
- */
+// V1 — single-screen form for submitting traffic reports (in-memory only, nothing persisted yet)
 class MainActivity : AppCompatActivity() {
 
     private val TAG = "TrafficReportActivity"

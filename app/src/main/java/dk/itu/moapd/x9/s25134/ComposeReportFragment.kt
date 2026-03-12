@@ -54,10 +54,7 @@ private val SeverityLow = Color(0xFF22C55E)
 private val SeverityMedium = Color(0xFFF59E0B)
 private val SeverityHigh = Color(0xFFEF4444)
 
-/**
- * Filter Reports screen — lets users narrow down the report list by type
- * using filter chips. Built with Jetpack Compose.
- */
+// Filter Reports screen — Compose-based, filters reports by type using chips
 class ComposeReportFragment : Fragment() {
 
     companion object {

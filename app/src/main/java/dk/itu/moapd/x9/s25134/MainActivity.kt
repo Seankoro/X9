@@ -12,10 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.IntentCompat
 
-/**
- * Dashboard screen — shows the latest submitted report and lets the user
- * open the report form or toggle dark mode.
- */
+// Dashboard — shows the latest report, lets you file a new one or toggle dark mode
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -80,7 +77,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Restores the user's dark mode preference from SharedPreferences. */
     private fun applyStoredTheme() {
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         if (prefs.contains(KEY_DARK_MODE)) {
@@ -93,7 +89,6 @@ class MainActivity : AppCompatActivity() {
         // No saved preference yet — follow system default
     }
 
-    /** Checks whether we're currently in dark mode. */
     private fun isCurrentlyInDarkMode(): Boolean {
         return when (AppCompatDelegate.getDefaultNightMode()) {
             AppCompatDelegate.MODE_NIGHT_YES -> true
@@ -105,31 +100,31 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        Log.d(TAG, "onStart() called — Activity is visible to the user")
+        Log.d(TAG, "onStart() called")
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume() called — Activity is in the foreground and interactive")
+        Log.d(TAG, "onResume() called")
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "onPause() called — Activity is partially obscured (e.g. another Activity launching)")
+        Log.d(TAG, "onPause() called")
     }
 
     override fun onStop() {
         super.onStop()
-        Log.d(TAG, "onStop() called — Activity is no longer visible")
+        Log.d(TAG, "onStop() called")
     }
 
     override fun onRestart() {
         super.onRestart()
-        Log.d(TAG, "onRestart() called — Activity is returning from stopped state")
+        Log.d(TAG, "onRestart() called")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG, "onDestroy() called — Activity is being destroyed (rotation or finish)")
+        Log.d(TAG, "onDestroy() called")
     }
 }

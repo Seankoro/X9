@@ -12,10 +12,7 @@ import androidx.core.widget.doOnTextChanged
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 
-/**
- * Form screen for creating a new traffic report.
- * Sends the completed report back to MainActivity via setResult().
- */
+// Report form — sends the result back to MainActivity via setResult()
 class ReportActivity : AppCompatActivity() {
 
     companion object {
@@ -94,7 +91,6 @@ class ReportActivity : AppCompatActivity() {
         }
     }
 
-    /** Sets the chip color based on severity: green (1–2), amber (3), red (4–5). */
     private fun updateSeverityChipColor(chip: TextView, progress: Int) {
         val colorRes = when (progress) {
             1, 2 -> R.color.severity_low
@@ -107,31 +103,31 @@ class ReportActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        Log.d(TAG, "onStart() called — Activity is visible to the user")
+        Log.d(TAG, "onStart() called")
     }
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume() called — Activity is in the foreground and interactive")
+        Log.d(TAG, "onResume() called")
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "onPause() called — Activity is partially obscured")
+        Log.d(TAG, "onPause() called")
     }
 
     override fun onStop() {
         super.onStop()
-        Log.d(TAG, "onStop() called — Activity is no longer visible")
+        Log.d(TAG, "onStop() called")
     }
 
     override fun onRestart() {
         super.onRestart()
-        Log.d(TAG, "onRestart() called — Activity is returning from stopped state")
+        Log.d(TAG, "onRestart() called")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG, "onDestroy() called — Activity is being destroyed (rotation or finish)")
+        Log.d(TAG, "onDestroy() called")
     }
 }

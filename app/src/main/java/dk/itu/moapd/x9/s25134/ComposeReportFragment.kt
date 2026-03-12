@@ -39,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -49,7 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
-// Severity colors (matching colors.xml)
+// Severity colors
 private val SeverityLow = Color(0xFF22C55E)
 private val SeverityMedium = Color(0xFFF59E0B)
 private val SeverityHigh = Color(0xFFEF4444)
@@ -176,12 +178,14 @@ fun X9ComposeTheme(content: @Composable () -> Unit) {
 fun ComposeReportScreen(viewModel: ReportListViewModel) {
     val reports by viewModel.reports.observeAsState(initial = emptyList())
 
-    var selectedFilter by remember { mutableStateOf("All") }
+    val allLabel = stringResource(R.string.filter_all)
+    var selectedFilter by remember { mutableStateOf(allLabel) }
 
-    val filterOptions = listOf("All", "Speed Camera", "Heavy Traffic", "Accident", "Road Work")
+    val trafficTypes = stringArrayResource(R.array.traffic_types)
+    val filterOptions = listOf(allLabel) + trafficTypes
 
     val filteredReports = remember(reports, selectedFilter) {
-        if (selectedFilter == "All") reports
+        if (selectedFilter == allLabel) reports
         else reports.filter { it.type == selectedFilter }
     }
 
@@ -201,14 +205,14 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
                     .padding(top = 40.dp, bottom = 24.dp)
             ) {
                 Text(
-                    text = "Filter Reports",
+                    text = stringResource(R.string.filter_reports_title),
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Narrow down reports by type",
+                    text = stringResource(R.string.filter_reports_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                 )
@@ -217,7 +221,7 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
 
         // Filter label
         Text(
-            text = "FILTER BY TYPE",
+            text = stringResource(R.string.filter_by_type),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 20.dp, top = 16.dp, bottom = 8.dp),
@@ -247,7 +251,7 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
 
         // Report count
         Text(
-            text = "${filteredReports.size} report(s)",
+            text = stringResource(R.string.report_count, filteredReports.size),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp)
@@ -271,9 +275,9 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
 @Composable
 fun TrafficReportCard(report: TrafficReport) {
     val severityLabel = when {
-        report.severity <= 2 -> "Low"
-        report.severity <= 3 -> "Medium"
-        else -> "High"
+        report.severity <= 2 -> stringResource(R.string.severity_label_low)
+        report.severity <= 3 -> stringResource(R.string.severity_label_medium)
+        else -> stringResource(R.string.severity_label_high)
     }
     val severityColor = when {
         report.severity <= 2 -> SeverityLow
@@ -309,7 +313,7 @@ fun TrafficReportCard(report: TrafficReport) {
                     color = severityColor
                 ) {
                     Text(
-                        text = "$severityLabel (${report.severity}/5)",
+                        text = stringResource(R.string.chip_severity_format, severityLabel, report.severity),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)

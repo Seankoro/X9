@@ -33,12 +33,16 @@ class TrafficReportAdapter :
             textType.text = report.type
             textDescription.text = report.description
 
-            val (label, colorRes) = when {
-                report.severity <= 2 -> "Low" to R.color.severity_low
-                report.severity <= 3 -> "Medium" to R.color.severity_medium
-                else -> "High" to R.color.severity_high
+            val (labelRes, colorRes) = when {
+                report.severity <= 2 -> R.string.severity_label_low to R.color.severity_low
+                report.severity <= 3 -> R.string.severity_label_medium to R.color.severity_medium
+                else -> R.string.severity_label_high to R.color.severity_high
             }
-            chipSeverity.text = "$label (${report.severity}/5)"
+            chipSeverity.text = itemView.context.getString(
+                R.string.chip_severity_format,
+                itemView.context.getString(labelRes),
+                report.severity
+            )
             chipSeverity.setChipBackgroundColorResource(colorRes)
             chipSeverity.setTextColor(
                 ContextCompat.getColor(itemView.context, R.color.waze_surface_on)

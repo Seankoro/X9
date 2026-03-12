@@ -69,10 +69,10 @@ class ReportFragment : Fragment() {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             if (editDescription.text.isNotEmpty()) {
                 MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Discard Report?")
-                    .setMessage("You have unsaved changes. Are you sure you want to go back?")
-                    .setNegativeButton("Keep Editing", null)
-                    .setPositiveButton("Discard") { _, _ ->
+                    .setTitle(R.string.discard_report_title)
+                    .setMessage(R.string.discard_report_message)
+                    .setNegativeButton(R.string.keep_editing, null)
+                    .setPositiveButton(R.string.discard) { _, _ ->
                         parentFragmentManager.popBackStack()
                     }
                     .show()

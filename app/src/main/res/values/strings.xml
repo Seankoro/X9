@@ -22,6 +22,16 @@
     <string name="severity_label_medium">Medium</string>
     <string name="severity_label_high">High</string>
     <string name="no_report_data">No report data received yet.</string>
+    <string name="chip_severity_format">%1$s (%2$d/5)</string>
+    <string name="discard_report_title">Discard Report?</string>
+    <string name="discard_report_message">You have unsaved changes. Are you sure you want to go back?</string>
+    <string name="keep_editing">Keep Editing</string>
+    <string name="discard">Discard</string>
+    <string name="filter_reports_title">Filter Reports</string>
+    <string name="filter_reports_subtitle">Narrow down reports by type</string>
+    <string name="filter_by_type">FILTER BY TYPE</string>
+    <string name="filter_all">All</string>
+    <string name="report_count">%1$d report(s)</string>
 
     <string name="summary_header">Latest Submission:</string>
     <string name="summary_type">Type: %1$s</string>

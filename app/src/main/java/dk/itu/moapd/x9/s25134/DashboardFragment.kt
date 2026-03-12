@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
 import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -107,9 +108,9 @@ class DashboardFragment : Fragment() {
 
             requireActivity()
                 .getSharedPreferences(MainActivity.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-                .edit()
-                .putBoolean(MainActivity.KEY_DARK_MODE, newDark)
-                .apply()
+                .edit {
+                    putBoolean(MainActivity.KEY_DARK_MODE, newDark)
+                }
 
             Log.d(TAG, "Dark mode toggled — dark=$newDark (was $currentlyDark)")
 

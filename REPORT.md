@@ -50,23 +50,21 @@ Beyond the core requirements, the following extensions were implemented:
 
 Due to time constraints, instead of adopting test-driven development with automated unit tests, smoke tests was conducted manually upon each iteration to the application. In these smoke tests, we manually click through the core features of the application to make sure it is functioning as intended.
 
-- **Form validation** -Submitting with an empty description is blocked and shows an error. The error clears when the user starts typing.
-- **Navigation flow** -Moving from the dashboard to the report form, submitting a report, and returning to the dashboard correctly displays the new report in the list.
-- **Swipe-to-delete** -Swiping a report card removes it from both the dashboard and filter screens. The ViewModel keeps both views in sync.
-- **Tap-to-view details** -Tapping a card on either screen opens a details dialog with the correct report information.
-- **Dark mode persistence** -Toggling dark mode and restarting the app confirms the theme preference is restored from `SharedPreferences`.
-- **Configuration changes** -Rotating the device does not clear the report list or lose scroll position, confirming the ViewModel retains state through configuration changes.
-- **Filter chips** -Selecting a filter chip correctly narrows the displayed list, and the count indicator updates to reflect the filtered results.
-- **Back-press guard** -The discard dialog appears only when the form contains input; pressing back on an empty form navigates away without interruption.
+- **Form validation** - Submitting with an empty description is blocked and shows an error. The error clears when the user starts typing.
+- **Navigation flow** - Moving from the dashboard to the report form, submitting a report, and returning to the dashboard correctly displays the new report in the list.
+- **Swipe-to-delete** - Swiping a report card removes it from both the dashboard and filter screens. The ViewModel keeps both views in sync.
+- **Tap-to-view details** - Tapping a card on either screen opens a details dialog with the correct report information.
+- **Dark mode persistence** - Toggling dark mode and restarting the app confirms the theme preference is restored from `SharedPreferences`.
+- **Configuration changes** - Rotating the device does not clear the report list or lose scroll position, confirming the ViewModel retains state through configuration changes.
+- **Filter chips** - Selecting a filter chip correctly narrows the displayed list, and the count indicator updates to reflect the filtered results.
+- **Back-press guard** - The discard dialog appears only when the form contains input; pressing back on an empty form navigates away without interruption.
 
 ## 5. Problems Encountered
 
-1. **Fragment back-stack conflicts** -Early versions suffered from duplicate Fragment instances and unexpected back-button behavior. The issue was traced to inconsistent use of `addToBackStack()`. Adding named back-stack tags to each transaction resolved the duplicates and gave predictable navigation.
+1. **Fragment back-stack conflicts** - Early versions produced duplicate Fragment instances and unexpected back-button behavior. The problem was traced to inconsistent use of `addToBackStack()`. Adding named back-stack tags to each transaction resolved the duplicates and gave predictable navigation.
 
-2. **Data loss on configuration change** -Rotating the device wiped the report list in versions before V4, because data was held directly in the Fragment. Introducing `ReportListViewModel` scoped to the Activity solved this, as the ViewModel survives configuration changes automatically.
+2. **State management across configuration changes** - Earlier versions managed the report list directly on the Activity, but the approach was not lifecycle-aware and required manual handling to survive configuration changes. Introducing `ReportListViewModel` scoped to the Activity replaced this with the standard Android architecture pattern, automatically retaining state across rotations without manual intervention.
 
-3. **Fragment communication** -Passing data between Fragments was initially handled with bundles and shared fields on the Activity, which created tight coupling. Refactoring to the Fragment Result API gave a cleaner, event-driven approach where `ReportFragment` posts a result and `DashboardFragment` listens for it independently.
+3. **Fragment communication** - Passing data between Fragments was initially handled with bundles and shared fields on the Activity, which created tight coupling. Refactoring to the Fragment Result API gave a cleaner, event-driven approach where `ReportFragment` posted a result and `DashboardFragment` listened for it without direct coupling.
 
-4. **RecyclerView not updating** -After adding a new report, the list did not visually update. Calling `notifyDataSetChanged()` worked but was inefficient. Switching to `ListAdapter` with `DiffUtil` provided automatic, animated list updates and eliminated the issue. This was later superseded by Compose's `LazyColumn`, which re-composes on state changes by default.
-
-5. **Compose interop with Fragments** -Embedding `ComposeView` inside Fragments initially caused memory leaks because the Compose composition outlived the Fragment's view. Setting the composition strategy to `ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed` ensured the composition is disposed when the Fragment's view is destroyed, preventing leaks.
+4. **Compose interop with Fragments** - Embedding `ComposeView` inside Fragments caused memory leaks because the Compose composition outlived the Fragment's view. Setting the composition strategy to `ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed` ensured the composition was disposed when the Fragment's view was destroyed, preventing the leaks.

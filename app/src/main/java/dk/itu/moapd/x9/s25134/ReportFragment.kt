@@ -47,10 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 
-/**
- * Form for creating a new traffic report.
- * Sends the result back to DashboardFragment via the Fragment Result API.
- */
+// New-report form — sends result back via Fragment Result API
 class ReportFragment : Fragment() {
 
     companion object {

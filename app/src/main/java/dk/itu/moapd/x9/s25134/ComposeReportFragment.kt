@@ -70,10 +70,7 @@ fun severityInfo(level: Int): Pair<String, Color> = when {
     else       -> "High" to SeverityHigh
 }
 
-/**
- * Filter Reports screen - lets users narrow down the report list by type
- * using filter chips.
- */
+// Filter Reports screen — filters reports by type using chips
 class ComposeReportFragment : Fragment() {
 
     companion object {
@@ -305,10 +302,6 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
     }
 }
 
-/**
- * Swipe-to-dismiss container. Swiping right to left reveals a red
- * background and deletes the item.
- */
 @Composable
 fun SwipeToDeleteContainer(
     onDelete: () -> Unit,
@@ -357,7 +350,6 @@ fun SwipeToDeleteContainer(
     )
 }
 
-/** Dialog showing full details of a tapped report. */
 @Composable
 fun ReportDetailDialog(report: TrafficReport, onDismiss: () -> Unit) {
     val (severityLabel, severityColor) = severityInfo(report.severity)

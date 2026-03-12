@@ -47,10 +47,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
 
-/**
- * Dashboard - shows the report list, buttons to file a new report
- * or filter existing ones, and a dark mode toggle.
- */
+// Dashboard — report list, new-report button, filter screen, dark mode toggle
 class DashboardFragment : Fragment() {
 
     companion object {

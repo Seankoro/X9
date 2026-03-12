@@ -5,10 +5,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 
-/**
- * Single-Activity host that holds the fragment container.
- * DashboardFragment is the start destination; other fragments are swapped in on top.
- */
+// Single-Activity host for the fragment container
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -32,7 +29,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Restores the user's dark mode preference from SharedPreferences */
     private fun applyStoredTheme() {
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         if (prefs.contains(KEY_DARK_MODE)) {

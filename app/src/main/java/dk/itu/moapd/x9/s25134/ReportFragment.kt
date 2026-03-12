@@ -15,10 +15,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 
-/**
- * Form for creating a new traffic report.
- * Sends the result back to DashboardFragment via the Fragment Result API.
- */
+// New-report form — sends result back via Fragment Result API
 class ReportFragment : Fragment() {
 
     companion object {

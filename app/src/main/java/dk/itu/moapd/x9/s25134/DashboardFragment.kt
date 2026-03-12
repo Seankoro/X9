@@ -17,10 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 
-/**
- * Dashboard — shows the report list via RecyclerView, a button to file a new report,
- * and a dark mode toggle.
- */
+// Dashboard — report list, new-report button, dark mode toggle
 class DashboardFragment : Fragment() {
 
     companion object {

@@ -16,23 +16,23 @@ From V5 onward, all three screens were **migrated to Jetpack Compose**. Compose'
 
 The dashboard is the landing screen. A header band displays the app name and a dark-mode toggle button. Below that, two action buttons ("Report an Incident" and "Filter Reports") sit above a scrollable list of submitted reports. Each report card shows the incident type, description, and severity. Users can **swipe a card to delete** it or **tap a card** to view its full details in a dialog.
 
-![Light Mode](light-mode.png){height=5cm}
+![Light Mode](assets/report-img/light-mode.png){height=5cm}
 
-![Dark Mode](dark-mode.png){height=5cm}
+![Dark Mode](assets/report-img/dark-mode.png){height=5cm}
 
 ### Report Form
 
 The report form lets users submit a new traffic incident. A dropdown selects the report type (e.g. Speed Camera, Accident, Heavy Traffic, Road Work). A text field captures a description, with validation that blocks submission if the field is empty. A severity slider (1–5) is paired with a color-coded chip that updates in real time. Pressing submit returns the user to the dashboard with the new report visible. If the user presses back with unsaved input, a confirmation dialog asks whether to discard changes.
 
-![Validation Error](validation-error.png){height=5cm}
+![Validation Error](assets/report-img/validation-error.png){height=5cm}
 
-![Report Filled](report-filled.png){height=5cm}
+![Report Filled](assets/report-img/report-filled.png){height=5cm}
 
 ### Filter Reports
 
 The filter screen displays a row of filter chips corresponding to each report type. Tapping a chip narrows the list to matching reports. A count indicator shows how many reports match the current filter. As on the dashboard, cards support swipe-to-delete and tap-to-view-details.
 
-![Filter Reports](filter-reports.png){height=5cm}
+![Filter Reports](assets/report-img/filter-reports.png){height=5cm}
 
 ## 3. Extensions
 

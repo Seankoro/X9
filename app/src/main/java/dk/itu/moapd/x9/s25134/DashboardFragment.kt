@@ -46,6 +46,7 @@ import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
 
 // Dashboard — report list, new-report button, filter screen, dark mode toggle
 class DashboardFragment : Fragment() {
@@ -87,14 +88,34 @@ class DashboardFragment : Fragment() {
             )
             setContent {
                 X9ComposeTheme {
+                    val authState = remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
+
                     DashboardScreen(
                         viewModel = viewModel,
+                        isSignedIn = authState.value != null,
+                        userDisplayName = authState.value?.displayName
+                            ?: authState.value?.email,
                         onOpenReporter = {
-                            Log.d(TAG, "Opening ReportFragment")
-                            parentFragmentManager.beginTransaction()
-                                .replace(R.id.fragment_container, ReportFragment())
-                                .addToBackStack("report")
-                                .commit()
+                            if (FirebaseAuth.getInstance().currentUser != null) {
+                                Log.d(TAG, "Opening ReportFragment")
+                                parentFragmentManager.beginTransaction()
+                                    .replace(R.id.fragment_container, ReportFragment())
+                                    .addToBackStack("report")
+                                    .commit()
+                            } else {
+                                Log.d(TAG, "Report blocked — user not signed in")
+                                view?.let { root ->
+                                    Snackbar.make(
+                                        root,
+                                        "Please sign in to report incidents",
+                                        Snackbar.LENGTH_LONG
+                                    ).show()
+                                }
+                                parentFragmentManager.beginTransaction()
+                                    .replace(R.id.fragment_container, LoginFragment())
+                                    .addToBackStack("login")
+                                    .commit()
+                            }
                         },
                         onOpenFilter = {
                             Log.d(TAG, "Opening ComposeReportFragment")
@@ -122,6 +143,20 @@ class DashboardFragment : Fragment() {
                                 if (newDark) AppCompatDelegate.MODE_NIGHT_YES
                                 else AppCompatDelegate.MODE_NIGHT_NO
                             )
+                        },
+                        onLogin = {
+                            parentFragmentManager.beginTransaction()
+                                .replace(R.id.fragment_container, LoginFragment())
+                                .addToBackStack("login")
+                                .commit()
+                        },
+                        onLogout = {
+                            Log.d(TAG, "Signing out")
+                            FirebaseAuth.getInstance().signOut()
+                            authState.value = null
+                        },
+                        onAuthStateRefresh = {
+                            authState.value = FirebaseAuth.getInstance().currentUser
                         }
                     )
                 }
@@ -173,12 +208,22 @@ class DashboardFragment : Fragment() {
 @Composable
 fun DashboardScreen(
     viewModel: ReportListViewModel,
+    isSignedIn: Boolean,
+    userDisplayName: String?,
     onOpenReporter: () -> Unit,
     onOpenFilter: () -> Unit,
-    onToggleDarkMode: () -> Unit
+    onToggleDarkMode: () -> Unit,
+    onLogin: () -> Unit,
+    onLogout: () -> Unit,
+    onAuthStateRefresh: () -> Unit
 ) {
     val reports by viewModel.reports.observeAsState(initial = emptyList())
     val selectedReport = remember { mutableStateOf<TrafficReport?>(null) }
+
+    // Refresh auth state when composition runs (e.g. after returning from LoginFragment)
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        onAuthStateRefresh()
+    }
 
     // Report detail dialog
     selectedReport.value?.let { report ->
@@ -229,10 +274,31 @@ fun DashboardScreen(
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
+                    // Auth button: logout when signed in, login when signed out
+                    if (isSignedIn) {
+                        IconButton(onClick = onLogout) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_logout),
+                                contentDescription = "Sign out",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = onLogin) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_login),
+                                contentDescription = "Sign in",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Community traffic reporting",
+                    text = if (isSignedIn && userDisplayName != null)
+                        "Hello, $userDisplayName"
+                    else
+                        "Sign in to report incidents",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                 )

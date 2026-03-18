@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import com.google.firebase.auth.FirebaseAuth
 
 // Single-Activity host for the fragment container
 class MainActivity : AppCompatActivity() {
@@ -14,14 +15,29 @@ class MainActivity : AppCompatActivity() {
         const val KEY_DARK_MODE = "dark_mode"
     }
 
+    private lateinit var auth: FirebaseAuth
+    private lateinit var authStateListener: FirebaseAuth.AuthStateListener
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // needs to run before super so the theme is set before any views inflate
         applyStoredTheme()
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() called")
+
+        auth = FirebaseAuth.getInstance()
+
+        authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                Log.d(TAG, "Auth state: signed in as ${user.email}")
+            } else {
+                Log.d(TAG, "Auth state: signed out")
+            }
+        }
+
         setContentView(R.layout.activity_main_host)
 
-        // only add the initial fragment on fresh launch, not on config changes
+        // always start with Dashboard — unauthenticated users can browse
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.fragment_container, DashboardFragment())
@@ -44,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         Log.d(TAG, "onStart() called")
+        auth.addAuthStateListener(authStateListener)
     }
 
     override fun onResume() {
@@ -59,6 +76,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         Log.d(TAG, "onStop() called")
+        auth.removeAuthStateListener(authStateListener)
     }
 
     override fun onDestroy() {

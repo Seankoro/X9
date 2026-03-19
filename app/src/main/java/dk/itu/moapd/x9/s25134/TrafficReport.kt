@@ -9,6 +9,7 @@ data class TrafficReport(
     val type: String = "",
     val description: String = "",
     val severity: Int = 0,
+    val location: String = "",
     val userId: String = "",
     val userName: String = "",
     val timestamp: Long = 0L

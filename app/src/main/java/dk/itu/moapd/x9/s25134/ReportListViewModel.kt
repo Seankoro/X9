@@ -1,36 +1,71 @@
 package dk.itu.moapd.x9.s25134
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 
-// In-memory report list, scoped to Activity — survives fragment swaps but not process death
 class ReportListViewModel : ViewModel() {
+
+    companion object {
+        private const val TAG = "ReportListViewModel"
+    }
 
     private val _reports = MutableLiveData<List<TrafficReport>>()
     val reports: LiveData<List<TrafficReport>> = _reports
 
-    // Seed data for demo purposes
+    private val ref: DatabaseReference =
+        FirebaseDatabase.getInstance().getReference("x9-reports/reports")
+
+    private val listener = object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            val list = snapshot.children.mapNotNull { child ->
+                child.getValue(TrafficReport::class.java)?.copy(id = child.key ?: "")
+            }.sortedByDescending { it.timestamp }
+            _reports.postValue(list)
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            Log.e(TAG, "Database read cancelled: ${error.message}", error.toException())
+        }
+    }
+
     init {
-        _reports.value = listOf(
-            TrafficReport("Accident", "Multi-car collision blocking two lanes on highway E45 near exit 12", 5),
-            TrafficReport("Heavy Traffic", "Slow-moving traffic on Lyngbyvejen towards city centre", 3),
-            TrafficReport("Speed Camera", "Mobile speed camera spotted near Nørreport station", 1),
-            TrafficReport("Road Work", "Lane closure on Amager Strandvej due to road resurfacing", 4),
-            TrafficReport("Heavy Traffic", "Congestion building on Hillerødmotorvejen after morning rush", 2),
-            TrafficReport("Accident", "Minor fender-bender on Østerbrogade, right lane blocked", 3),
-            TrafficReport("Road Work", "Utility maintenance causing delays on Vesterbrogade", 2),
-            TrafficReport("Speed Camera", "Fixed speed camera active at Folehaven 60 km/h zone", 1)
-        )
+        ref.addValueEventListener(listener)
     }
 
     fun addReport(report: TrafficReport) {
-        val current = _reports.value.orEmpty()
-        _reports.value = listOf(report) + current
+        val newRef = ref.push()
+        val withId = report.copy(id = newRef.key ?: "")
+        newRef.setValue(withId)
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to add report", e)
+            }
+    }
+
+    fun updateReport(report: TrafficReport) {
+        if (report.id.isBlank()) return
+        ref.child(report.id).setValue(report)
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to update report ${report.id}", e)
+            }
     }
 
     fun removeReport(report: TrafficReport) {
-        val current = _reports.value.orEmpty()
-        _reports.value = current - report
+        if (report.id.isBlank()) return
+        ref.child(report.id).removeValue()
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to remove report ${report.id}", e)
+            }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ref.removeEventListener(listener)
     }
 }

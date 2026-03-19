@@ -5,7 +5,11 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class TrafficReport(
-    val type: String,
-    val description: String,
-    val severity: Int
+    val id: String = "",
+    val type: String = "",
+    val description: String = "",
+    val severity: Int = 0,
+    val userId: String = "",
+    val userName: String = "",
+    val timestamp: Long = 0L
 ) : Parcelable

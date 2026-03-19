@@ -44,14 +44,21 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.os.bundleOf
+import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import com.google.firebase.auth.FirebaseAuth
 
-// New-report form — sends result back via Fragment Result API
 class ReportFragment : Fragment() {
 
     companion object {
         private const val TAG = "ReportFragment"
+        private const val ARG_REPORT = "arg_report"
+
+        fun newInstance(report: TrafficReport): ReportFragment =
+            ReportFragment().apply {
+                arguments = Bundle().apply { putParcelable(ARG_REPORT, report) }
+            }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,15 +73,22 @@ class ReportFragment : Fragment() {
     ): View {
         Log.d(TAG, "onCreateView() called")
 
-        // Confirm before discarding if the user has typed something
-        var hasInput = false
+        val existingReport = arguments?.let {
+            BundleCompat.getParcelable(it, ARG_REPORT, TrafficReport::class.java)
+        }
+        val isEditMode = existingReport != null
+
+        // In edit mode there's always something to discard, so start true
+        var hasInput = isEditMode
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             if (hasInput) {
-                // Use a simple dialog via the fragment manager
                 com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Discard Report?")
-                    .setMessage("You have unsaved changes. Are you sure you want to go back?")
+                    .setTitle(if (isEditMode) "Discard Changes?" else "Discard Report?")
+                    .setMessage(
+                        if (isEditMode) "Your edits will not be saved. Are you sure?"
+                        else "You have unsaved changes. Are you sure you want to go back?"
+                    )
                     .setNegativeButton("Keep Editing", null)
                     .setPositiveButton("Discard") { _, _ ->
                         parentFragmentManager.popBackStack()
@@ -92,14 +106,32 @@ class ReportFragment : Fragment() {
             setContent {
                 X9ComposeTheme {
                     ReportFormScreen(
+                        existingReport = existingReport,
                         onDescriptionChanged = { hasInput = it.isNotEmpty() },
                         onSubmit = { type, description, severity ->
-                            Log.d(TAG, "Report submitted - Type: $type | Severity: $severity/5 | Description: $description")
-                            val report = TrafficReport(type, description, severity)
-                            parentFragmentManager.setFragmentResult(
-                                "report_result",
-                                bundleOf("report" to report)
-                            )
+                            Log.d(TAG, "${if (isEditMode) "Updating" else "Submitting"} report - Type: $type | Severity: $severity/5")
+                            val viewModel = ViewModelProvider(requireActivity())[ReportListViewModel::class.java]
+                            if (isEditMode) {
+                                viewModel.updateReport(
+                                    existingReport.copy(
+                                        type = type,
+                                        description = description,
+                                        severity = severity
+                                    )
+                                )
+                            } else {
+                                val user = FirebaseAuth.getInstance().currentUser
+                                viewModel.addReport(
+                                    TrafficReport(
+                                        type = type,
+                                        description = description,
+                                        severity = severity,
+                                        userId = user?.uid ?: "",
+                                        userName = user?.displayName ?: user?.email ?: "",
+                                        timestamp = System.currentTimeMillis()
+                                    )
+                                )
+                            }
                             parentFragmentManager.popBackStack()
                         }
                     )
@@ -108,48 +140,26 @@ class ReportFragment : Fragment() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        Log.d(TAG, "onStart() called")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "onResume() called")
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d(TAG, "onPause() called")
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Log.d(TAG, "onStop() called")
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        Log.d(TAG, "onDestroyView() called")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "onDestroy() called")
-    }
+    override fun onStart() { super.onStart(); Log.d(TAG, "onStart() called") }
+    override fun onResume() { super.onResume(); Log.d(TAG, "onResume() called") }
+    override fun onPause() { super.onPause(); Log.d(TAG, "onPause() called") }
+    override fun onStop() { super.onStop(); Log.d(TAG, "onStop() called") }
+    override fun onDestroyView() { super.onDestroyView(); Log.d(TAG, "onDestroyView() called") }
+    override fun onDestroy() { super.onDestroy(); Log.d(TAG, "onDestroy() called") }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportFormScreen(
+    existingReport: TrafficReport? = null,
     onDescriptionChanged: (String) -> Unit,
     onSubmit: (type: String, description: String, severity: Int) -> Unit
 ) {
     val trafficTypes = listOf("Speed Camera", "Heavy Traffic", "Accident", "Road Work")
 
-    var selectedType by remember { mutableStateOf(trafficTypes[0]) }
-    var description by remember { mutableStateOf("") }
-    var severity by remember { mutableFloatStateOf(1f) }
+    var selectedType by remember { mutableStateOf(existingReport?.type ?: trafficTypes[0]) }
+    var description by remember { mutableStateOf(existingReport?.description ?: "") }
+    var severity by remember { mutableFloatStateOf((existingReport?.severity ?: 1).toFloat()) }
     var descriptionError by remember { mutableStateOf<String?>(null) }
     var typeDropdownExpanded by remember { mutableStateOf(false) }
 
@@ -173,7 +183,7 @@ fun ReportFormScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Traffic Report (X9)",
+                    text = if (existingReport != null) "Edit Report" else "Traffic Report (X9)",
                     style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold
@@ -315,7 +325,7 @@ fun ReportFormScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Submit button
+            // Submit / Save button
             Button(
                 onClick = {
                     if (description.trim().isEmpty()) {
@@ -335,7 +345,7 @@ fun ReportFormScreen(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
                 Text(
-                    text = "Submit Report",
+                    text = if (existingReport != null) "Save Changes" else "Submit Report",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold
                 )

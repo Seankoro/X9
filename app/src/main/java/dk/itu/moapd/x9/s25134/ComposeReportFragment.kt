@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.google.firebase.auth.FirebaseAuth
 
 // green / amber / red used for the severity chips across all screens
 val SeverityLow = Color(0xFF22C55E)
@@ -97,7 +98,16 @@ class ComposeReportFragment : Fragment() {
             )
             setContent {
                 X9ComposeTheme {
-                    ComposeReportScreen(viewModel = viewModel)
+                    ComposeReportScreen(
+                        viewModel = viewModel,
+                        currentUserId = FirebaseAuth.getInstance().currentUser?.uid,
+                        onEditReport = { report ->
+                            parentFragmentManager.beginTransaction()
+                                .replace(R.id.fragment_container, ReportFragment.newInstance(report))
+                                .addToBackStack("edit_report")
+                                .commit()
+                        }
+                    )
                 }
             }
         }
@@ -190,7 +200,11 @@ fun X9ComposeTheme(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun ComposeReportScreen(viewModel: ReportListViewModel) {
+fun ComposeReportScreen(
+    viewModel: ReportListViewModel,
+    currentUserId: String?,
+    onEditReport: (TrafficReport) -> Unit
+) {
     val reports by viewModel.reports.observeAsState(initial = emptyList())
 
     var selectedFilter by remember { mutableStateOf("All") }
@@ -208,6 +222,8 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
     selectedReport.value?.let { report ->
         ReportDetailDialog(
             report = report,
+            currentUserId = currentUserId,
+            onEdit = { onEditReport(report) },
             onDismiss = { selectedReport.value = null }
         )
     }
@@ -287,11 +303,19 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
         ) {
             items(
                 items = filteredReports,
-                key = { report -> "${report.type}_${report.description}_${report.severity}" }
+                key = { report -> report.id.ifBlank { "${report.type}_${report.timestamp}" } }
             ) { report ->
-                SwipeToDeleteContainer(
-                    onDelete = { viewModel.removeReport(report) }
-                ) {
+                if (currentUserId != null && report.userId == currentUserId) {
+                    SwipeActionsContainer(
+                        onEdit = { onEditReport(report) },
+                        onDelete = { viewModel.removeReport(report) }
+                    ) {
+                        TrafficReportCard(
+                            report = report,
+                            onClick = { selectedReport.value = report }
+                        )
+                    }
+                } else {
                     TrafficReportCard(
                         report = report,
                         onClick = { selectedReport.value = report }
@@ -303,16 +327,21 @@ fun ComposeReportScreen(viewModel: ReportListViewModel) {
 }
 
 @Composable
-fun SwipeToDeleteContainer(
+fun SwipeActionsContainer(
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val dismissState = rememberSwipeToDismissBoxState()
 
-    // Trigger delete when the user completes the swipe
-    if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-        LaunchedEffect(dismissState) {
-            onDelete()
+    LaunchedEffect(dismissState.currentValue) {
+        when (dismissState.currentValue) {
+            SwipeToDismissBoxValue.StartToEnd -> {
+                dismissState.reset()
+                onEdit()
+            }
+            SwipeToDismissBoxValue.EndToStart -> onDelete()
+            else -> {}
         }
     }
 
@@ -321,21 +350,29 @@ fun SwipeToDeleteContainer(
         backgroundContent = {
             val color by animateColorAsState(
                 targetValue = when (dismissState.targetValue) {
+                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFF1A56DB)
                     SwipeToDismissBoxValue.EndToStart -> Color(0xFFEF4444)
                     else -> Color.Transparent
                 },
                 label = "swipe-bg"
             )
+            val (label, alignment, padding) = when (dismissState.targetValue) {
+                SwipeToDismissBoxValue.StartToEnd ->
+                    Triple("Edit", Alignment.CenterStart, PaddingValues(start = 24.dp))
+                SwipeToDismissBoxValue.EndToStart ->
+                    Triple("Delete", Alignment.CenterEnd, PaddingValues(end = 24.dp))
+                else -> Triple("", Alignment.Center, androidx.compose.foundation.layout.PaddingValues())
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(color)
-                    .padding(end = 24.dp),
-                contentAlignment = Alignment.CenterEnd
+                    .padding(padding),
+                contentAlignment = alignment
             ) {
-                if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                if (dismissState.targetValue != SwipeToDismissBoxValue.Settled) {
                     Text(
-                        text = "Delete",
+                        text = label,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodyLarge
@@ -343,16 +380,21 @@ fun SwipeToDeleteContainer(
                 }
             }
         },
-        // Only allow right-to-left swipe
-        enableDismissFromStartToEnd = false,
+        enableDismissFromStartToEnd = true,
         enableDismissFromEndToStart = true,
         content = { content() }
     )
 }
 
 @Composable
-fun ReportDetailDialog(report: TrafficReport, onDismiss: () -> Unit) {
+fun ReportDetailDialog(
+    report: TrafficReport,
+    currentUserId: String? = null,
+    onEdit: () -> Unit = {},
+    onDismiss: () -> Unit
+) {
     val (severityLabel, severityColor) = severityInfo(report.severity)
+    val isOwner = currentUserId != null && report.userId == currentUserId
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -390,11 +432,31 @@ fun ReportDetailDialog(report: TrafficReport, onDismiss: () -> Unit) {
                         )
                     }
                 }
+                if (!isOwner && report.userName.isNotBlank()) {
+                    Text(
+                        text = "Reported by ${report.userName}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
+            if (isOwner) {
+                TextButton(onClick = { onDismiss(); onEdit() }) {
+                    Text("Edit")
+                }
+            } else {
+                TextButton(onClick = onDismiss) {
+                    Text("Close")
+                }
+            }
+        },
+        dismissButton = {
+            if (isOwner) {
+                TextButton(onClick = onDismiss) {
+                    Text("Close")
+                }
             }
         }
     )

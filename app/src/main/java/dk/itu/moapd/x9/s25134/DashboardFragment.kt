@@ -42,7 +42,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
@@ -62,18 +61,6 @@ class DashboardFragment : Fragment() {
         Log.d(TAG, "onCreate() called")
 
         viewModel = ViewModelProvider(requireActivity())[ReportListViewModel::class.java]
-
-        // Listen for reports coming back from ReportFragment
-        parentFragmentManager.setFragmentResultListener("report_result", this) { _, bundle ->
-            val report = BundleCompat.getParcelable(bundle, "report", TrafficReport::class.java)
-            report?.let {
-                viewModel.addReport(it)
-                Log.d(TAG, "Report received from ReportFragment: $it")
-                view?.let { root ->
-                    Snackbar.make(root, R.string.report_submitted_toast, Snackbar.LENGTH_LONG).show()
-                }
-            }
-        }
     }
 
     override fun onCreateView(
@@ -93,8 +80,15 @@ class DashboardFragment : Fragment() {
                     DashboardScreen(
                         viewModel = viewModel,
                         isSignedIn = authState.value != null,
+                        currentUserId = authState.value?.uid,
                         userDisplayName = authState.value?.displayName
                             ?: authState.value?.email,
+                        onEditReport = { report ->
+                            parentFragmentManager.beginTransaction()
+                                .replace(R.id.fragment_container, ReportFragment.newInstance(report))
+                                .addToBackStack("edit_report")
+                                .commit()
+                        },
                         onOpenReporter = {
                             if (FirebaseAuth.getInstance().currentUser != null) {
                                 Log.d(TAG, "Opening ReportFragment")
@@ -209,7 +203,9 @@ class DashboardFragment : Fragment() {
 fun DashboardScreen(
     viewModel: ReportListViewModel,
     isSignedIn: Boolean,
+    currentUserId: String?,
     userDisplayName: String?,
+    onEditReport: (TrafficReport) -> Unit,
     onOpenReporter: () -> Unit,
     onOpenFilter: () -> Unit,
     onToggleDarkMode: () -> Unit,
@@ -229,6 +225,8 @@ fun DashboardScreen(
     selectedReport.value?.let { report ->
         ReportDetailDialog(
             report = report,
+            currentUserId = currentUserId,
+            onEdit = { onEditReport(report) },
             onDismiss = { selectedReport.value = null }
         )
     }
@@ -367,11 +365,19 @@ fun DashboardScreen(
         ) {
             items(
                 items = reports,
-                key = { report -> "${report.type}_${report.description}_${report.severity}" }
+                key = { report -> report.id.ifBlank { "${report.type}_${report.timestamp}" } }
             ) { report ->
-                SwipeToDeleteContainer(
-                    onDelete = { viewModel.removeReport(report) }
-                ) {
+                if (currentUserId != null && report.userId == currentUserId) {
+                    SwipeActionsContainer(
+                        onEdit = { onEditReport(report) },
+                        onDelete = { viewModel.removeReport(report) }
+                    ) {
+                        TrafficReportCard(
+                            report = report,
+                            onClick = { selectedReport.value = report }
+                        )
+                    }
+                } else {
                     TrafficReportCard(
                         report = report,
                         onClick = { selectedReport.value = report }

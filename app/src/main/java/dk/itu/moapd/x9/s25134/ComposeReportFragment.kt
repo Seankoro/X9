@@ -113,12 +113,7 @@ class ComposeReportFragment : Fragment() {
                     ComposeReportScreen(
                         viewModel = viewModel,
                         currentUserId = FirebaseAuth.getInstance().currentUser?.uid,
-                        onEditReport = { report ->
-                            parentFragmentManager.beginTransaction()
-                                .replace(R.id.fragment_container, ReportFragment.newInstance(report))
-                                .addToBackStack("edit_report")
-                                .commit()
-                        }
+                        onEditReport = { /* handled by MainActivity in Task 9 */ }
                     )
                 }
             }

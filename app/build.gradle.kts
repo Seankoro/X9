@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.compose.runtime.livedata)
+    implementation(libs.compose.material.icons.extended)
     implementation(libs.androidx.activity.compose)
     // Firebase
     implementation(platform(libs.firebase.bom))

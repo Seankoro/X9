@@ -1,389 +1,199 @@
 package dk.itu.moapd.x9.s25134
 
-import android.content.res.Configuration
-import android.os.Bundle
-import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.content.edit
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.FirebaseAuth
+import java.util.Calendar
 
-// Dashboard — report list, new-report button, filter screen, dark mode toggle
-class DashboardFragment : Fragment() {
+@Composable
+fun DashboardScreen(
+    viewModel: ReportListViewModel,
+    currentUserId: String?,
+    userDisplayName: String?,
+    onSwitchToAdd: () -> Unit,
+    onSwitchToReports: () -> Unit,
+    onShowSignIn: () -> Unit,
+    onEditReport: (TrafficReport) -> Unit = {},
+    onComingSoon: () -> Unit = {}
+) {
+    val reports by viewModel.reports.observeAsState(initial = emptyList())
+    val selectedReport = remember { mutableStateOf<TrafficReport?>(null) }
 
-    companion object {
-        private const val TAG = "DashboardFragment"
+    val activeCount = reports.size
+    val criticalCount = reports.count { it.severity >= 4 }
+    val yourCount = if (currentUserId != null) reports.count { it.userId == currentUserId } else 0
+    val todayCount = remember(reports) {
+        val cal = Calendar.getInstance()
+        val todayStart = cal.apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        reports.count { it.timestamp >= todayStart }
     }
 
-    private lateinit var viewModel: ReportListViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.d(TAG, "onCreate() called")
-
-        viewModel = ViewModelProvider(requireActivity())[ReportListViewModel::class.java]
+    selectedReport.value?.let { report ->
+        ReportDetailDialog(
+            report = report,
+            currentUserId = currentUserId,
+            onEdit = {
+                selectedReport.value = null
+                onEditReport(report)
+            },
+            onDismiss = { selectedReport.value = null }
+        )
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        Log.d(TAG, "onCreateView() called")
-        return ComposeView(requireContext()).apply {
-            setViewCompositionStrategy(
-                ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
-            )
-            setContent {
-                X9ComposeTheme {
-                    val authState = remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
-
-                    DashboardScreen(
-                        viewModel = viewModel,
-                        isSignedIn = authState.value != null,
-                        currentUserId = authState.value?.uid,
-                        userDisplayName = authState.value?.displayName
-                            ?: authState.value?.email,
-                        onEditReport = { report ->
-                            parentFragmentManager.beginTransaction()
-                                .replace(R.id.fragment_container, ReportFragment.newInstance(report))
-                                .addToBackStack("edit_report")
-                                .commit()
-                        },
-                        onOpenReporter = {
-                            if (FirebaseAuth.getInstance().currentUser != null) {
-                                Log.d(TAG, "Opening ReportFragment")
-                                parentFragmentManager.beginTransaction()
-                                    .replace(R.id.fragment_container, ReportFragment())
-                                    .addToBackStack("report")
-                                    .commit()
-                            } else {
-                                Log.d(TAG, "Report blocked — user not signed in")
-                                view?.let { root ->
-                                    Snackbar.make(
-                                        root,
-                                        "Please sign in to report incidents",
-                                        Snackbar.LENGTH_LONG
-                                    ).show()
-                                }
-                                parentFragmentManager.beginTransaction()
-                                    .replace(R.id.fragment_container, LoginFragment())
-                                    .addToBackStack("login")
-                                    .commit()
-                            }
-                        },
-                        onOpenFilter = {
-                            Log.d(TAG, "Opening ComposeReportFragment")
-                            parentFragmentManager.beginTransaction()
-                                .replace(R.id.fragment_container, ComposeReportFragment())
-                                .addToBackStack("compose_reports")
-                                .commit()
-                        },
-                        onToggleDarkMode = {
-                            val currentlyDark = isCurrentlyInDarkMode()
-                            val newDark = !currentlyDark
-
-                            requireActivity()
-                                .getSharedPreferences(
-                                    MainActivity.PREFS_NAME,
-                                    android.content.Context.MODE_PRIVATE
-                                )
-                                .edit {
-                                    putBoolean(MainActivity.KEY_DARK_MODE, newDark)
-                                }
-
-                            Log.d(TAG, "Dark mode toggled - dark=$newDark (was $currentlyDark)")
-
-                            AppCompatDelegate.setDefaultNightMode(
-                                if (newDark) AppCompatDelegate.MODE_NIGHT_YES
-                                else AppCompatDelegate.MODE_NIGHT_NO
-                            )
-                        },
-                        onLogin = {
-                            parentFragmentManager.beginTransaction()
-                                .replace(R.id.fragment_container, LoginFragment())
-                                .addToBackStack("login")
-                                .commit()
-                        },
-                        onLogout = {
-                            Log.d(TAG, "Signing out")
-                            FirebaseAuth.getInstance().signOut()
-                            authState.value = null
-                        },
-                        onAuthStateRefresh = {
-                            authState.value = FirebaseAuth.getInstance().currentUser
-                        }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 20.dp, bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Good morning",
+                        fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = if (userDisplayName != null) "Hello, $userDisplayName 👋"
+                               else "Welcome back 👋",
+                        fontSize = 22.sp, fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                Box {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(
+                                androidx.compose.ui.graphics.Brush.linearGradient(
+                                    listOf(Color(0xFF06D6A0), Color(0xFF118AB2))
+                                ),
+                                RoundedCornerShape(14.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = userDisplayName?.firstOrNull()?.uppercase() ?: "?",
+                            fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0A0E1A)
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(Color(0xFFEF476F), RoundedCornerShape(6.dp))
+                            .align(Alignment.TopEnd)
+                            .offset(x = 2.dp, y = (-2).dp)
                     )
                 }
             }
         }
-    }
 
-    override fun onStart() {
-        super.onStart()
-        Log.d(TAG, "onStart() called")
-    }
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatCard("📡", activeCount, "Active Reports", MaterialTheme.colorScheme.primary)
+                    StatCard("📋", yourCount, "Your Reports", Color(0xFF3B82F6))
+                }
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatCard("🔴", criticalCount, "Critical Alerts", MaterialTheme.colorScheme.error)
+                    StatCard("📅", todayCount, "Today's Reports", Color(0xFFFFD166))
+                }
+            }
+        }
 
-    override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "onResume() called")
-    }
+        item {
+            Text("Quick Actions",
+                fontSize = 17.sp, fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(start = 20.dp, top = 16.dp, bottom = 8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                QuickActionButton("➕", "New Report", modifier = Modifier.weight(1f),
+                    onClick = onSwitchToAdd)
+                QuickActionButton("🗺️", "View Map", modifier = Modifier.weight(1f),
+                    onClick = { onComingSoon() })
+                QuickActionButton("📅", "Calendar", modifier = Modifier.weight(1f),
+                    onClick = { onComingSoon() })
+            }
+        }
 
-    override fun onPause() {
-        super.onPause()
-        Log.d(TAG, "onPause() called")
-    }
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 16.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Recent Reports", fontSize = 17.sp, fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground)
+                TextButton(onClick = onSwitchToReports) {
+                    Text("View all →", fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
 
-    override fun onStop() {
-        super.onStop()
-        Log.d(TAG, "onStop() called")
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        Log.d(TAG, "onDestroyView() called")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "onDestroy() called")
-    }
-
-    // checks the AppCompat night mode first, falls back to the system setting
-    private fun isCurrentlyInDarkMode(): Boolean {
-        return when (AppCompatDelegate.getDefaultNightMode()) {
-            AppCompatDelegate.MODE_NIGHT_YES -> true
-            AppCompatDelegate.MODE_NIGHT_NO  -> false
-            else -> resources.configuration.uiMode and
-                    Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        val recent = reports.take(4)
+        items(recent, key = { it.id.ifBlank { "${it.type}_${it.timestamp}" } }) { report ->
+            TrafficReportCard(report = report, onClick = { selectedReport.value = report })
         }
     }
 }
 
 @Composable
-fun DashboardScreen(
-    viewModel: ReportListViewModel,
-    isSignedIn: Boolean,
-    currentUserId: String?,
-    userDisplayName: String?,
-    onEditReport: (TrafficReport) -> Unit,
-    onOpenReporter: () -> Unit,
-    onOpenFilter: () -> Unit,
-    onToggleDarkMode: () -> Unit,
-    onLogin: () -> Unit,
-    onLogout: () -> Unit,
-    onAuthStateRefresh: () -> Unit
+private fun QuickActionButton(
+    icon: String,
+    label: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
-    val reports by viewModel.reports.observeAsState(initial = emptyList())
-    val selectedReport = remember { mutableStateOf<TrafficReport?>(null) }
-
-    // Refresh auth state when composition runs (e.g. after returning from LoginFragment)
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        onAuthStateRefresh()
-    }
-
-    // Report detail dialog
-    selectedReport.value?.let { report ->
-        ReportDetailDialog(
-            report = report,
-            currentUserId = currentUserId,
-            onEdit = { onEditReport(report) },
-            onDismiss = { selectedReport.value = null }
-        )
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(0.6.dp, MaterialTheme.colorScheme.outline),
+        onClick = onClick
     ) {
-        // Header band
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.primary
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 40.dp, bottom = 28.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_traffic_alert),
-                        contentDescription = "Traffic alert icon",
-                        modifier = Modifier
-                            .size(34.dp)
-                            .padding(end = 12.dp),
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Text(
-                        text = "X9",
-                        style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(onClick = onToggleDarkMode) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_dark_mode_toggle),
-                            contentDescription = "Toggle dark mode",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                    // Auth button: logout when signed in, login when signed out
-                    if (isSignedIn) {
-                        IconButton(onClick = onLogout) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_logout),
-                                contentDescription = "Sign out",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    } else {
-                        IconButton(onClick = onLogin) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_login),
-                                contentDescription = "Sign in",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = if (isSignedIn && userDisplayName != null)
-                        "Hello, $userDisplayName"
-                    else
-                        "Sign in to report incidents",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                )
-            }
-        }
-
-        // Action button (overlaps header with negative offset)
-        Button(
-            onClick = onOpenReporter,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .offset(y = (-28).dp)
-                .height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary
-            ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+                .padding(vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text(
-                text = "Report an Incident",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        // Filter button
-        Button(
-            onClick = onOpenFilter,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .offset(y = (-20).dp)
-                .height(48.dp),
-            shape = RoundedCornerShape(24.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Text(
-                text = "Filter Reports",
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-
-        // Section label
-        Text(
-            text = "TRAFFIC REPORTS",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .padding(start = 20.dp, end = 20.dp)
-                .offset(y = (-8).dp),
-            letterSpacing = 0.1.sp
-        )
-
-        // Report list with swipe-to-delete and click-to-view
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset(y = (-4).dp),
-            contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp)
-        ) {
-            items(
-                items = reports,
-                key = { report -> report.id.ifBlank { "${report.type}_${report.timestamp}" } }
-            ) { report ->
-                if (currentUserId != null && report.userId == currentUserId) {
-                    SwipeActionsContainer(
-                        onEdit = { onEditReport(report) },
-                        onDelete = { viewModel.removeReport(report) }
-                    ) {
-                        TrafficReportCard(
-                            report = report,
-                            onClick = { selectedReport.value = report }
-                        )
-                    }
-                } else {
-                    TrafficReportCard(
-                        report = report,
-                        onClick = { selectedReport.value = report }
-                    )
-                }
-            }
+            Text(icon, fontSize = 20.sp)
+            Text(label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

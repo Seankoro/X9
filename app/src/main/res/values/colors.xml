@@ -1,47 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Light mode — teal palette -->
+    <color name="x9_teal">#04A07A</color>
+    <color name="x9_teal_on">#FFFFFF</color>
+    <color name="x9_teal_container">#D0F5EA</color>
+    <color name="x9_teal_container_on">#003D2A</color>
 
-    <!-- Light mode -->
-    <color name="x9_blue">#1A56DB</color>
-    <color name="x9_blue_on">#FFFFFF</color>
-    <color name="x9_blue_container">#D6E4FF</color>
-    <color name="x9_blue_container_on">#00297A</color>
-
-    <color name="x9_amber">#F5A623</color>
+    <color name="x9_amber">#F59E0B</color>
     <color name="x9_amber_on">#1C1400</color>
-    <color name="x9_amber_container">#FFECD1</color>
+    <color name="x9_amber_container">#FFF3CD</color>
     <color name="x9_amber_container_on">#2A1800</color>
 
-    <color name="x9_background">#F8F9FF</color>
-    <color name="x9_background_on">#191C20</color>
+    <color name="x9_background">#F0F4F8</color>
+    <color name="x9_background_on">#0A0E1A</color>
     <color name="x9_surface">#FFFFFF</color>
-    <color name="x9_surface_on">#191C20</color>
-    <color name="x9_surface_variant">#E1E6F4</color>
-    <color name="x9_surface_variant_on">#44485A</color>
-    <color name="x9_outline">#74788A</color>
-    <color name="x9_outline_variant">#C4C8DA</color>
+    <color name="x9_surface_on">#0A0E1A</color>
+    <color name="x9_surface_variant">#E8F5F0</color>
+    <color name="x9_surface_variant_on">#44685A</color>
+    <color name="x9_outline">#8AB4A0</color>
+    <color name="x9_outline_variant">#C4DDD4</color>
 
-    <color name="x9_error">#BA1A1A</color>
+    <color name="x9_error">#EF476F</color>
     <color name="x9_error_on">#FFFFFF</color>
 
-    <!-- Dark mode -->
-    <color name="x9_blue_night">#A8C4FF</color>
-    <color name="x9_blue_on_night">#003180</color>
-    <color name="x9_blue_container_night">#0040A8</color>
-    <color name="x9_blue_container_on_night">#D6E4FF</color>
+    <!-- Dark mode — teal palette -->
+    <color name="x9_teal_night">#06D6A0</color>
+    <color name="x9_teal_on_night">#0A0E1A</color>
+    <color name="x9_teal_container_night">#0D2A1F</color>
+    <color name="x9_teal_container_on_night">#06D6A0</color>
 
-    <color name="x9_amber_night">#FFB94A</color>
-    <color name="x9_amber_on_night">#3B2000</color>
-    <color name="x9_amber_container_night">#593100</color>
-    <color name="x9_amber_container_on_night">#FFDDB3</color>
+    <color name="x9_amber_night">#FFD166</color>
+    <color name="x9_amber_on_night">#1C1400</color>
+    <color name="x9_amber_container_night">#3B2000</color>
+    <color name="x9_amber_container_on_night">#FFE8A0</color>
 
-    <color name="x9_background_night">#101318</color>
-    <color name="x9_background_on_night">#E1E3EC</color>
-    <color name="x9_surface_night">#191C20</color>
-    <color name="x9_surface_on_night">#E1E3EC</color>
-    <color name="x9_surface_variant_night">#44485A</color>
-    <color name="x9_surface_variant_on_night">#C4C8DA</color>
-    <color name="x9_outline_night">#8E92A4</color>
-    <color name="x9_outline_variant_night">#44485A</color>
+    <color name="x9_background_night">#0A0E1A</color>
+    <color name="x9_background_on_night">#F0F4F8</color>
+    <color name="x9_surface_night">#111827</color>
+    <color name="x9_surface_on_night">#F0F4F8</color>
+    <color name="x9_surface_variant_night">#1A2236</color>
+    <color name="x9_surface_variant_on_night">#8899B4</color>
+    <color name="x9_outline_night">#1E2A45</color>
+    <color name="x9_outline_variant_night">#1E2A45</color>
 
+    <color name="x9_error_night">#EF476F</color>
+    <color name="x9_error_on_night">#FFFFFF</color>
 </resources>

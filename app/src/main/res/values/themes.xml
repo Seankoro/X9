@@ -1,9 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.X9" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/x9_blue</item>
-        <item name="colorOnPrimary">@color/x9_blue_on</item>
-        <item name="colorPrimaryContainer">@color/x9_blue_container</item>
-        <item name="colorOnPrimaryContainer">@color/x9_blue_container_on</item>
+        <item name="colorPrimary">@color/x9_teal</item>
+        <item name="colorOnPrimary">@color/x9_teal_on</item>
+        <item name="colorPrimaryContainer">@color/x9_teal_container</item>
+        <item name="colorOnPrimaryContainer">@color/x9_teal_container_on</item>
         <item name="colorSecondary">@color/x9_amber</item>
         <item name="colorOnSecondary">@color/x9_amber_on</item>
         <item name="colorSecondaryContainer">@color/x9_amber_container</item>
@@ -18,6 +18,7 @@
         <item name="colorOutlineVariant">@color/x9_outline_variant</item>
         <item name="colorError">@color/x9_error</item>
         <item name="colorOnError">@color/x9_error_on</item>
+        <item name="android:windowBackground">@color/x9_background</item>
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>

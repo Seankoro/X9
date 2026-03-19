@@ -1,9 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.X9" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/x9_blue_night</item>
-        <item name="colorOnPrimary">@color/x9_blue_on_night</item>
-        <item name="colorPrimaryContainer">@color/x9_blue_container_night</item>
-        <item name="colorOnPrimaryContainer">@color/x9_blue_container_on_night</item>
+        <item name="colorPrimary">@color/x9_teal_night</item>
+        <item name="colorOnPrimary">@color/x9_teal_on_night</item>
+        <item name="colorPrimaryContainer">@color/x9_teal_container_night</item>
+        <item name="colorOnPrimaryContainer">@color/x9_teal_container_on_night</item>
         <item name="colorSecondary">@color/x9_amber_night</item>
         <item name="colorOnSecondary">@color/x9_amber_on_night</item>
         <item name="colorSecondaryContainer">@color/x9_amber_container_night</item>
@@ -16,9 +16,10 @@
         <item name="colorOnSurfaceVariant">@color/x9_surface_variant_on_night</item>
         <item name="colorOutline">@color/x9_outline_night</item>
         <item name="colorOutlineVariant">@color/x9_outline_variant_night</item>
-        <item name="colorError">@color/x9_error</item>
-        <item name="colorOnError">@color/x9_error_on</item>
+        <item name="colorError">@color/x9_error_night</item>
+        <item name="colorOnError">@color/x9_error_on_night</item>
+        <item name="android:windowBackground">@color/x9_background_night</item>
         <item name="android:statusBarColor">?attr/colorSurface</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
     </style>
 </resources>

@@ -20,6 +20,6 @@
         <item name="colorOnError">@color/x9_error_on</item>
         <item name="android:windowBackground">@color/x9_background</item>
         <item name="android:statusBarColor">?attr/colorSurface</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
     </style>
 </resources>

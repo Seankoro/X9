@@ -1,10 +1,5 @@
 package dk.itu.moapd.x9.s25134
 
-import android.os.Bundle
-import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -47,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,17 +54,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import com.google.firebase.auth.FirebaseAuth
 
 // severity colors used across all screens
 val SeverityLow    = Color(0xFF3B82F6)
@@ -81,74 +72,6 @@ fun severityInfo(level: Int): Pair<String, Color> = when {
     level == 3 -> "High"     to Color(0xFFF97316)
     level == 2 -> "Medium"   to Color(0xFFF59E0B)
     else       -> "Low"      to Color(0xFF3B82F6)
-}
-
-// Filter Reports screen — filters reports by type using chips
-class ComposeReportFragment : Fragment() {
-
-    companion object {
-        private const val TAG = "ComposeReportFragment"
-    }
-
-    private lateinit var viewModel: ReportListViewModel
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Log.d(TAG, "onCreate() called")
-        viewModel = ViewModelProvider(requireActivity())[ReportListViewModel::class.java]
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        Log.d(TAG, "onCreateView() called")
-        return ComposeView(requireContext()).apply {
-            setViewCompositionStrategy(
-                ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
-            )
-            setContent {
-                X9ComposeTheme {
-                    ComposeReportScreen(
-                        viewModel = viewModel,
-                        currentUserId = FirebaseAuth.getInstance().currentUser?.uid,
-                        onEditReport = { /* handled by MainActivity in Task 9 */ }
-                    )
-                }
-            }
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        Log.d(TAG, "onStart() called")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "onResume() called")
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d(TAG, "onPause() called")
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Log.d(TAG, "onStop() called")
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        Log.d(TAG, "onDestroyView() called")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "onDestroy() called")
-    }
 }
 
 // mirrors the XML theme (Theme.X9) so Compose screens get the same colors
@@ -323,23 +246,25 @@ fun ComposeReportScreen(
     onEditReport: (TrafficReport) -> Unit
 ) {
     val reports by viewModel.reports.observeAsState(initial = emptyList())
-
     var selectedFilter by remember { mutableStateOf("All") }
-
+    var searchQuery by remember { mutableStateOf("") }
     val selectedReport = remember { mutableStateOf<TrafficReport?>(null) }
-
     val filterOptions = listOf("All", "Speed Camera", "Heavy Traffic", "Accident", "Road Work")
 
-    val filteredReports = remember(reports, selectedFilter) {
-        if (selectedFilter == "All") reports
-        else reports.filter { it.type == selectedFilter }
+    val filteredReports = remember(reports, selectedFilter, searchQuery) {
+        reports
+            .filter { if (selectedFilter == "All") true else it.type == selectedFilter }
+            .filter {
+                if (searchQuery.isBlank()) true
+                else it.type.contains(searchQuery, ignoreCase = true) ||
+                     it.description.contains(searchQuery, ignoreCase = true) ||
+                     it.location.contains(searchQuery, ignoreCase = true)
+            }
     }
 
-    // Report detail dialog
     selectedReport.value?.let { report ->
         ReportDetailDialog(
-            report = report,
-            currentUserId = currentUserId,
+            report = report, currentUserId = currentUserId,
             onEdit = { onEditReport(report) },
             onDismiss = { selectedReport.value = null }
         )
@@ -350,41 +275,19 @@ fun ComposeReportScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Header
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.primary
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 40.dp, bottom = 24.dp)
-            ) {
-                Text(
-                    text = "Filter Reports",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Narrow down reports by type",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                )
-            }
-        }
+        ScreenHeader(title = "Reports", onBack = null)
 
-        // Filter label
-        Text(
-            text = "FILTER BY TYPE",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 20.dp, top = 16.dp, bottom = 8.dp),
-            letterSpacing = 0.1.sp
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text("Search reports…") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true
         )
 
-        // Filter chips
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -405,38 +308,30 @@ fun ComposeReportScreen(
             }
         }
 
-        // Report count
         Text(
-            text = "${filteredReports.size} report(s)",
+            "${filteredReports.size} report(s)",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp)
+            modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 4.dp)
         )
 
-        // Report list with swipe-to-delete
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp)
         ) {
             items(
                 items = filteredReports,
-                key = { report -> report.id.ifBlank { "${report.type}_${report.timestamp}" } }
+                key = { it.id.ifBlank { "${it.type}_${it.timestamp}" } }
             ) { report ->
                 if (currentUserId != null && report.userId == currentUserId) {
                     SwipeActionsContainer(
                         onEdit = { onEditReport(report) },
                         onDelete = { viewModel.removeReport(report) }
                     ) {
-                        TrafficReportCard(
-                            report = report,
-                            onClick = { selectedReport.value = report }
-                        )
+                        TrafficReportCard(report = report, onClick = { selectedReport.value = report })
                     }
                 } else {
-                    TrafficReportCard(
-                        report = report,
-                        onClick = { selectedReport.value = report }
-                    )
+                    TrafficReportCard(report = report, onClick = { selectedReport.value = report })
                 }
             }
         }

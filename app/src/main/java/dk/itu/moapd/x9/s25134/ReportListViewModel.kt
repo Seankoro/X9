@@ -4,11 +4,16 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class ReportListViewModel : ViewModel() {
 
@@ -18,6 +23,13 @@ class ReportListViewModel : ViewModel() {
 
     private val _reports = MutableLiveData<List<TrafficReport>>()
     val reports: LiveData<List<TrafficReport>> = _reports
+
+    private val _authState = MutableStateFlow(FirebaseAuth.getInstance().currentUser)
+    val authState: StateFlow<FirebaseUser?> = _authState.asStateFlow()
+
+    private val authListener = FirebaseAuth.AuthStateListener { auth ->
+        _authState.value = auth.currentUser
+    }
 
     private val ref: DatabaseReference =
         FirebaseDatabase.getInstance().getReference("x9-reports/reports")
@@ -37,6 +49,7 @@ class ReportListViewModel : ViewModel() {
 
     init {
         ref.addValueEventListener(listener)
+        FirebaseAuth.getInstance().addAuthStateListener(authListener)
     }
 
     fun addReport(report: TrafficReport) {
@@ -67,5 +80,6 @@ class ReportListViewModel : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         ref.removeEventListener(listener)
+        FirebaseAuth.getInstance().removeAuthStateListener(authListener)
     }
 }

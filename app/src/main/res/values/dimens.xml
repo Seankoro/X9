@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Header band -->
+    <dimen name="header_padding_horizontal">24dp</dimen>
+    <dimen name="header_padding_top">40dp</dimen>
+    <dimen name="header_padding_bottom">24dp</dimen>
+
+    <!-- Report card -->
+    <dimen name="card_padding_horizontal">16dp</dimen>
+    <dimen name="card_padding_vertical">5dp</dimen>
+    <dimen name="card_corner_radius">14dp</dimen>
+    <dimen name="card_content_padding">16dp</dimen>
+    <dimen name="card_severity_chip_padding_horizontal">12dp</dimen>
+    <dimen name="card_severity_chip_padding_vertical">6dp</dimen>
+
+    <!-- Filter screen -->
+    <dimen name="filter_label_padding_start">20dp</dimen>
+    <dimen name="filter_chips_padding_horizontal">16dp</dimen>
+    <dimen name="filter_chips_spacing">8dp</dimen>
+</resources>

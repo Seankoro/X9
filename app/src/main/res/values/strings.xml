@@ -5,23 +5,18 @@
     <string name="hint_description">Situation description…</string>
     <string name="label_description">Description</string>
     <string name="label_severity">Severity Level (1–5)</string>
-    <string name="severity_value">%1$d / 5</string>
     <string name="subtitle_text">Community traffic reporting</string>
     <string name="button_submit">Submit Report</string>
-    <string name="no_data_yet">No data submitted yet.</string>
     <string name="error_empty_description">Description cannot be empty!</string>
     <string name="report_submitted_toast">Report processed and logged.</string>
     <string name="btn_create_report">Report an Incident</string>
     <string name="btn_compose_reports">Filter Reports</string>
     <string name="header_icon_desc">Traffic alert icon</string>
     <string name="btn_toggle_dark_mode">Toggle dark mode</string>
-    <string name="section_latest_report">LATEST REPORT</string>
     <string name="section_traffic_reports">TRAFFIC REPORTS</string>
-    <string name="card_report_header">Traffic Summary</string>
     <string name="severity_label_low">Low</string>
     <string name="severity_label_medium">Medium</string>
     <string name="severity_label_high">High</string>
-    <string name="no_report_data">No report data received yet.</string>
     <string name="chip_severity_format">%1$s (%2$d/5)</string>
     <string name="discard_report_title">Discard Report?</string>
     <string name="discard_report_message">You have unsaved changes. Are you sure you want to go back?</string>
@@ -32,11 +27,10 @@
     <string name="filter_by_type">FILTER BY TYPE</string>
     <string name="filter_all">All</string>
     <string name="report_count">%1$d report(s)</string>
-
-    <string name="summary_header">Latest Submission:</string>
-    <string name="summary_type">Type: %1$s</string>
-    <string name="summary_severity">Severity: %1$d/5</string>
-    <string name="summary_description">Desc: %1$s</string>
+    <string name="delete_label">Delete</string>
+    <string name="cancel_label">Cancel</string>
+    <string name="dialog_delete_title">Delete Report?</string>
+    <string name="dialog_delete_message">This report will be permanently removed.</string>
 
     <string-array name="traffic_types">
         <item>Speed Camera</item>

@@ -2,41 +2,74 @@ package dk.itu.moapd.x9.s25134
 
 import android.os.Bundle
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import dk.itu.moapd.x9.s25134.ui.screens.DashboardScreen
+import dk.itu.moapd.x9.s25134.ui.screens.FilterReportScreen
+import dk.itu.moapd.x9.s25134.ui.screens.ReportFormScreen
+import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
+import dk.itu.moapd.x9.s25134.viewmodel.ReportListViewModel
 
-// Single-Activity host for the fragment container
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
-        const val PREFS_NAME = "x9_prefs"
-        const val KEY_DARK_MODE = "dark_mode"
     }
+
+    private val viewModel: ReportListViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        applyStoredTheme()
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate() called")
-        setContentView(R.layout.activity_main_host)
+        setContent {
+            // isDarkMode is a StateFlow, so collectAsStateWithLifecycle is used.
+            // reports is LiveData, so observeAsState bridges it into Compose state.
+            val isDarkModePreference by viewModel.isDarkMode.collectAsStateWithLifecycle()
+            val reports by viewModel.reports.observeAsState(initial = emptyList())
+            val navController = rememberNavController()
 
-        // Skip on config change — FragmentManager restores the back stack itself
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, DashboardFragment())
-                .commit()
-        }
-    }
+            // Resolve final dark mode value: saved user preference takes priority;
+            // fall back to the device system setting on first launch (null preference).
+            val isDarkMode = isDarkModePreference ?: isSystemInDarkTheme()
 
-    private fun applyStoredTheme() {
-        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-        if (prefs.contains(KEY_DARK_MODE)) {
-            AppCompatDelegate.setDefaultNightMode(
-                if (prefs.getBoolean(KEY_DARK_MODE, false))
-                    AppCompatDelegate.MODE_NIGHT_YES
-                else
-                    AppCompatDelegate.MODE_NIGHT_NO
-            )
+            X9ComposeTheme(darkTheme = isDarkMode) {
+                // Initialize the navHost handling compose navigation automatically using the routes
+                NavHost(navController = navController, startDestination = "dashboard") {
+                    composable("dashboard") {
+                        DashboardScreen(
+                            reports = reports,
+                            onToggleDarkMode = { viewModel.setDarkMode(!isDarkMode) },
+                            onNavigateToReport = { navController.navigate("report") },
+                            onNavigateToFilter = { navController.navigate("filter") },
+                            onDeleteReport = { viewModel.deleteReport(it) }
+                        )
+                    }
+                    composable("report") {
+                        ReportFormScreen(
+                            onSubmit = { report ->
+                                viewModel.addReport(report)
+                                navController.popBackStack()
+                            },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("filter") {
+                        // No onBack needed — system back pops this screen via Compose Navigation
+                        FilterReportScreen(
+                            reports = reports,
+                            onDeleteReport = { viewModel.deleteReport(it) }
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -58,10 +91,5 @@ class MainActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         Log.d(TAG, "onStop() called")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "onDestroy() called")
     }
 }

@@ -2,52 +2,65 @@
 <resources>
 
     <!-- ── Light scheme ────────────────────────────────────────────── -->
-    <color name="x9_primary">#1A56DB</color>
-    <color name="x9_on_primary">#FFFFFF</color>
-    <color name="x9_primary_container">#D6E4FF</color>
-    <color name="x9_on_primary_container">#00297A</color>
+    <color name="x9_primary">#06d6a0</color>
+    <color name="x9_on_primary">#0a0e1a</color>
+    <color name="x9_primary_container">#c8f7ec</color>
+    <color name="x9_on_primary_container">#002117</color>
 
-    <color name="x9_secondary">#F5A623</color>
-    <color name="x9_on_secondary">#1C1400</color>
-    <color name="x9_secondary_container">#FFECD1</color>
-    <color name="x9_on_secondary_container">#2A1800</color>
+    <color name="x9_secondary">#118ab2</color>
+    <color name="x9_on_secondary">#ffffff</color>
+    <color name="x9_secondary_container">#c8e8f4</color>
+    <color name="x9_on_secondary_container">#001f2a</color>
 
-    <color name="x9_background">#F8F9FF</color>
-    <color name="x9_on_background">#191C20</color>
-    <color name="x9_surface">#FFFFFF</color>
-    <color name="x9_on_surface">#191C20</color>
-    <color name="x9_surface_variant">#E1E6F4</color>
-    <color name="x9_on_surface_variant">#44485A</color>
-    <color name="x9_outline">#74788A</color>
-    <color name="x9_outline_variant">#C4C8DA</color>
+    <color name="x9_background">#f0f4f8</color>
+    <color name="x9_on_background">#191c20</color>
+    <color name="x9_surface">#ffffff</color>
+    <color name="x9_on_surface">#191c20</color>
+    <color name="x9_surface_variant">#e8f5f0</color>
+    <color name="x9_on_surface_variant">#44485a</color>
+    <color name="x9_outline">#74788a</color>
+    <color name="x9_outline_variant">#c4c8da</color>
 
-    <color name="x9_error">#BA1A1A</color>
-    <color name="x9_on_error">#FFFFFF</color>
+    <color name="x9_error">#D32F2F</color>
+    <color name="x9_on_error">#ffffff</color>
 
     <!-- ── Dark scheme ─────────────────────────────────────────────── -->
-    <color name="x9_primary_dark">#A8C4FF</color>
-    <color name="x9_on_primary_dark">#003180</color>
-    <color name="x9_primary_container_dark">#0040A8</color>
-    <color name="x9_on_primary_container_dark">#D6E4FF</color>
+    <color name="x9_primary_dark">#06d6a0</color>
+    <color name="x9_on_primary_dark">#0a0e1a</color>
+    <color name="x9_primary_container_dark">#004d38</color>
+    <color name="x9_on_primary_container_dark">#c8f7ec</color>
 
-    <color name="x9_secondary_dark">#FFB94A</color>
-    <color name="x9_on_secondary_dark">#3B2000</color>
-    <color name="x9_secondary_container_dark">#593100</color>
-    <color name="x9_on_secondary_container_dark">#FFDDB3</color>
+    <color name="x9_secondary_dark">#67c9e8</color>
+    <color name="x9_on_secondary_dark">#003547</color>
+    <color name="x9_secondary_container_dark">#004d67</color>
+    <color name="x9_on_secondary_container_dark">#c8e8f4</color>
 
-    <color name="x9_background_dark">#101318</color>
-    <color name="x9_on_background_dark">#E1E3EC</color>
-    <color name="x9_surface_dark">#191C20</color>
-    <color name="x9_on_surface_dark">#E1E3EC</color>
-    <color name="x9_surface_variant_dark">#44485A</color>
-    <color name="x9_on_surface_variant_dark">#C4C8DA</color>
-    <color name="x9_outline_dark">#8E92A4</color>
-    <color name="x9_outline_variant_dark">#44485A</color>
+    <color name="x9_background_dark">#0a0e1a</color>
+    <color name="x9_on_background_dark">#f0f4f8</color>
+    <color name="x9_surface_dark">#111827</color>
+    <color name="x9_on_surface_dark">#f0f4f8</color>
+    <color name="x9_surface_variant_dark">#1a2236</color>
+    <color name="x9_on_surface_variant_dark">#8899b4</color>
+    <color name="x9_outline_dark">#1e2a45</color>
+    <color name="x9_outline_variant_dark">#2a3a5c</color>
 
-    <!-- ── Severity indicators (theme-neutral) ────────────────────── -->
-    <color name="severity_low">#22C55E</color>
-    <color name="severity_medium">#F59E0B</color>
-    <color name="severity_high">#EF4444</color>
-    <color name="on_severity_chip">#FFFFFF</color>
+    <!-- ── Severity (per-level, theme-neutral) ────────────────────── -->
+    <color name="severity_critical">#ef4444</color>
+    <color name="severity_critical_bg">#1fef4444</color>
+    <color name="severity_high">#f97316</color>
+    <color name="severity_high_bg">#1ff97316</color>
+    <color name="severity_moderate">#f59e0b</color>
+    <color name="severity_moderate_bg">#1ff59e0b</color>
+    <color name="severity_low">#3b82f6</color>
+    <color name="severity_low_bg">#1f3b82f6</color>
+    <color name="severity_minor">#22c55e</color>
+    <color name="severity_minor_bg">#1f22c55e</color>
+    <color name="on_severity_chip">#ffffff</color>
+
+    <!-- ── Accent colours used by StatCards ──────────────────────── -->
+    <color name="accent_teal">#06d6a0</color>
+    <color name="accent_pink">#ef476f</color>
+    <color name="accent_blue">#118ab2</color>
+    <color name="accent_yellow">#ffd166</color>
 
 </resources>

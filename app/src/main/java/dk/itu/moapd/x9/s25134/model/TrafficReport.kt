@@ -1,6 +1,7 @@
 package dk.itu.moapd.x9.s25134.model
 
 import java.util.UUID
+import java.time.Instant
 
 // Define an ENUM to ensure strict data validation for severity levels
 enum class Severity(val level: Int) {
@@ -15,6 +16,8 @@ data class TrafficReport(
     val type: String,
     val description: String,
     val severity: Severity,
+    val location: String = "",
     val id: String = UUID.randomUUID().toString(), // UUID ensures uniqueness
-    val timestamp: Long = System.currentTimeMillis()
+    val createdAt: Long = Instant.now().toEpochMilli(),
+    val updatedAt: Long = Instant.now().toEpochMilli()
 )

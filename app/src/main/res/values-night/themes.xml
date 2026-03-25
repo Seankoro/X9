@@ -1,6 +1,7 @@
 <resources>
     <style name="Theme.X9" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">@color/x9_surface_dark</item>
+        <item name="android:windowBackground">@color/x9_background_dark</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

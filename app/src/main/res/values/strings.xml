@@ -5,32 +5,83 @@
     <string name="hint_description">Situation description…</string>
     <string name="label_description">Description</string>
     <string name="label_severity">Severity Level (1–5)</string>
-    <string name="subtitle_text">Community traffic reporting</string>
+    <string name="subtitle_text">Traffic Reports</string>
     <string name="button_submit">Submit Report</string>
     <string name="error_empty_description">Description cannot be empty!</string>
-    <string name="report_submitted_toast">Report processed and logged.</string>
-    <string name="btn_create_report">Report an Incident</string>
-    <string name="btn_compose_reports">Filter Reports</string>
-    <string name="header_icon_desc">Traffic alert icon</string>
-    <string name="btn_toggle_dark_mode">Toggle dark mode</string>
-    <string name="section_traffic_reports">TRAFFIC REPORTS</string>
+    <string name="severity_label_minor">Minor</string>
     <string name="severity_label_low">Low</string>
-    <string name="severity_label_medium">Medium</string>
+    <string name="severity_label_moderate">Moderate</string>
     <string name="severity_label_high">High</string>
-    <string name="chip_severity_format">%1$s (%2$d/5)</string>
+    <string name="severity_label_critical">Critical</string>
     <string name="discard_report_title">Discard Report?</string>
     <string name="discard_report_message">You have unsaved changes. Are you sure you want to go back?</string>
     <string name="keep_editing">Keep Editing</string>
     <string name="discard">Discard</string>
-    <string name="filter_reports_title">Filter Reports</string>
-    <string name="filter_reports_subtitle">Narrow down reports by type</string>
-    <string name="filter_by_type">FILTER BY TYPE</string>
     <string name="filter_all">All</string>
     <string name="report_count">%1$d report(s)</string>
     <string name="delete_label">Delete</string>
     <string name="cancel_label">Cancel</string>
+    <string name="edit_label">Edit</string>
+    <string name="search_reports_hint">Search reports…</string>
     <string name="dialog_delete_title">Delete Report?</string>
     <string name="dialog_delete_message">This report will be permanently removed.</string>
+    <string name="title_new_report">New Report</string>
+    <string name="title_edit_report">Edit Report</string>
+    <string name="title_report_detail">Report Detail</string>
+    <string name="label_location">Location</string>
+    <string name="hint_location">E.g. Highway E45, Nørreport…</string>
+
+    <!-- Login -->
+    <string name="btn_sign_in_google">Sign in with Google</string>
+    <string name="coming_soon_title">Coming Soon</string>
+    <string name="coming_soon_auth_message">Google Sign-In will be available in a future update.</string>
+    <string name="coming_soon_message">This feature is not yet available.</string>
+    <string name="ok_label">OK</string>
+
+    <!-- Navigation tabs -->
+    <string name="nav_home">Home</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_add">Add</string>
+    <string name="nav_map">Map</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Profile -->
+    <string name="profile_dark_mode">Dark Mode</string>
+    <string name="profile_dark_mode_subtitle">Follow system setting or override</string>
+    <string name="profile_account">Account</string>
+    <string name="profile_notifications">Notifications</string>
+    <string name="profile_about">About X9</string>
+
+    <!-- Snackbar -->
+    <string name="snackbar_coming_soon">Coming Soon</string>
+
+    <!-- Greetings -->
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="greeting_welcome_back">Welcome back 👋</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_add_report">Add Report</string>
+
+    <!-- UI symbols -->
+    <string name="chevron_right">›</string>
+
+    <!-- Severity display -->
+    <string name="severity_level_display">%1$s (%2$d/5)</string>
+
+    <!-- Dashboard -->
+    <string name="stat_active_reports">Active Reports</string>
+    <string name="stat_critical_alerts">Critical Alerts</string>
+    <string name="stat_your_reports">Your Reports</string>
+    <string name="stat_resolved_today">Resolved Today</string>
+    <string name="section_quick_actions">Quick Actions</string>
+    <string name="section_recent_reports">Recent Reports</string>
+    <string name="quick_action_new_report">New Report</string>
+    <string name="quick_action_view_map">View Map</string>
+    <string name="quick_action_calendar">Calendar</string>
+    <string name="btn_view_all">View all →</string>
 
     <string-array name="traffic_types">
         <item>Speed Camera</item>

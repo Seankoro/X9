@@ -2,15 +2,17 @@ package dk.itu.moapd.x9.s25134.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -19,7 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,8 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -41,62 +41,47 @@ import androidx.compose.ui.unit.dp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
+import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
+import dk.itu.moapd.x9.s25134.ui.components.severityLabel
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportFormScreen(
+    reportId: String? = null,
+    reports: List<TrafficReport> = emptyList(),
     onSubmit: (TrafficReport) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    paddingValues: PaddingValues = PaddingValues()
 ) {
     val trafficTypes = stringArrayResource(R.array.traffic_types)
+    val existingReport = remember(reportId) { reports.find { it.id == reportId } }
+    val isEditMode = existingReport != null
 
-    // expanded doesn't need to survive rotation — dropdown can close on config change
     var expanded by remember { mutableStateOf(false) }
-    // rememberSaveable for form fields so the user doesn't lose input on screen rotation
-    var selectedType by rememberSaveable { mutableStateOf(trafficTypes[0]) }
-    var description by rememberSaveable { mutableStateOf("") }
-    var descriptionError by rememberSaveable { mutableStateOf<String?>(null) }
-    var severityFloat by rememberSaveable { mutableFloatStateOf(1f) }
+    var selectedType by rememberSaveable(reportId) { mutableStateOf(existingReport?.type ?: trafficTypes[0]) }
+    var location by rememberSaveable(reportId) { mutableStateOf(existingReport?.location ?: "") }
+    var description by rememberSaveable(reportId) { mutableStateOf(existingReport?.description ?: "") }
+    var descriptionError by rememberSaveable(reportId) { mutableStateOf<String?>(null) }
+    var severityFloat by rememberSaveable(reportId) {
+        mutableFloatStateOf(existingReport?.severity?.level?.toFloat() ?: 1f)
+    }
 
-    // Map the slider float (1.0–5.0) to the corresponding Severity enum entry.
-    // Severity.entries is ordered MINOR..CRITICAL so subtracting 1 gives the correct index.
     val severity: Severity = Severity.entries[severityFloat.roundToInt() - 1]
-
-    // Severity colour — colorResource() must be inside the composable body
-    val severityColor: Color = when {
-        severity.level <= 2 -> colorResource(R.color.severity_low)
-        severity.level <= 3 -> colorResource(R.color.severity_medium)
-        else                -> colorResource(R.color.severity_high)
-    }
-    val severityLabel = when {
-        severity.level <= 2 -> stringResource(R.string.severity_label_low)
-        severity.level <= 3 -> stringResource(R.string.severity_label_medium)
-        else                -> stringResource(R.string.severity_label_high)
-    }
-
-    // Hoisted here because stringResource() cannot be called inside a lambda (onClick, etc.)
+    val hasInput = description.isNotBlank() || location.isNotBlank()
+    val showDiscardDialog = rememberSaveable { mutableStateOf(false) }
     val errorEmptyDescription = stringResource(R.string.error_empty_description)
 
-    val showDiscardDialog = rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = hasInput) { showDiscardDialog.value = true }
 
-    // Intercept the device in-built back button when the users have filled up something
-    BackHandler(enabled = description.isNotEmpty()) {
-        showDiscardDialog.value = true
-    }
-
-    // Await users confirmation before discarding all values
     if (showDiscardDialog.value) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog.value = false },
             title = { Text(stringResource(R.string.discard_report_title)) },
             text = { Text(stringResource(R.string.discard_report_message)) },
             confirmButton = {
-                TextButton(onClick = {
-                    showDiscardDialog.value = false
-                    onBack()
-                }) {
+                TextButton(onClick = { showDiscardDialog.value = false; onBack() }) {
                     Text(stringResource(R.string.discard))
                 }
             },
@@ -111,131 +96,135 @@ fun ReportFormScreen(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(paddingValues)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = dimensionResource(R.dimen.header_padding_horizontal))
-            .padding(top = 24.dp, bottom = 16.dp)
     ) {
-        Text(
-            text = stringResource(R.string.title_text),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
+        ScreenHeader(
+            title = if (isEditMode) stringResource(R.string.title_edit_report)
+                    else stringResource(R.string.title_new_report),
+            onBack = onBack
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Report type dropdown
-        Text(
-            text = stringResource(R.string.label_type),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
+        Column(
+            modifier = Modifier
+                .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding))
+                .padding(top = 16.dp, bottom = 24.dp)
         ) {
-            OutlinedTextField(
-                value = selectedType,
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                    .fillMaxWidth()
+            // Type dropdown
+            Text(
+                text = stringResource(R.string.label_type),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            ExposedDropdownMenu(
+            Spacer(modifier = Modifier.height(4.dp))
+            ExposedDropdownMenuBox(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onExpandedChange = { expanded = !expanded }
             ) {
-                trafficTypes.forEach { type ->
-                    DropdownMenuItem(
-                        text = { Text(type) },
-                        onClick = {
-                            selectedType = type
-                            expanded = false
-                        }
-                    )
+                OutlinedTextField(
+                    value = selectedType,
+                    onValueChange = {},
+                    readOnly = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                )
+                ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    trafficTypes.forEach { type ->
+                        DropdownMenuItem(text = { Text(type) }, onClick = { selectedType = type; expanded = false })
+                    }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Description field
-        OutlinedTextField(
-            value = description,
-            onValueChange = {
-                description = it
-                // Clear the error as soon as the user types something meaningful
-                if (it.trim().isNotEmpty()) descriptionError = null
-            },
-            label = { Text(stringResource(R.string.label_description)) },
-            placeholder = { Text(stringResource(R.string.hint_description)) },
-            isError = descriptionError != null,
-            supportingText = descriptionError?.let { { Text(it) } },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            maxLines = 4
-        )
+            // Location field
+            OutlinedTextField(
+                value = location,
+                onValueChange = { location = it },
+                label = { Text(stringResource(R.string.label_location)) },
+                placeholder = { Text(stringResource(R.string.hint_location)) },
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Severity slider
-        Text(
-            text = stringResource(R.string.label_severity),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Slider(
-            value = severityFloat,
-            onValueChange = { severityFloat = it },
-            valueRange = 1f..5f,
-            steps = 3, // 3 intermediate steps between endpoints → 5 total positions (1–5)
-            modifier = Modifier.fillMaxWidth()
-        )
+            // Description field
+            OutlinedTextField(
+                value = description,
+                onValueChange = {
+                    description = it
+                    if (it.trim().isNotEmpty()) descriptionError = null
+                },
+                label = { Text(stringResource(R.string.label_description)) },
+                placeholder = { Text(stringResource(R.string.hint_description)) },
+                isError = descriptionError != null,
+                supportingText = descriptionError?.let { { Text(it) } },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(120.dp),
+                maxLines = 4
+            )
 
-        // Severity chip
-        Surface(
-            shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)),
-            color = severityColor
-        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Severity slider
             Text(
-                text = stringResource(R.string.chip_severity_format, severityLabel, severity.level),
-                style = MaterialTheme.typography.labelSmall,
-                color = colorResource(R.color.on_severity_chip),
-                modifier = Modifier.padding(
-                    horizontal = dimensionResource(R.dimen.card_severity_chip_padding_horizontal),
-                    vertical = dimensionResource(R.dimen.card_severity_chip_padding_vertical)
+                text = stringResource(R.string.label_severity),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Slider(
+                value = severityFloat,
+                onValueChange = { severityFloat = it },
+                valueRange = 1f..5f,
+                steps = 3,
+                modifier = Modifier.fillMaxWidth(),
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary
                 )
             )
-        }
+            Text(
+                text = stringResource(R.string.severity_level_display, severityLabel(severity), severity.level),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        // Submit button
-        Button(
-            onClick = {
-                val trimmed = description.trim()
-                if (trimmed.isEmpty()) {
-                    descriptionError = errorEmptyDescription
-                    return@Button
-                }
-                onSubmit(TrafficReport(type = selectedType, description = trimmed, severity = severity))
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.button_submit))
+            // Submit button
+            Button(
+                onClick = {
+                    val trimmed = description.trim()
+                    if (trimmed.isEmpty()) { descriptionError = errorEmptyDescription; return@Button }
+                    val report = if (isEditMode) {
+                        existingReport.copy(type = selectedType, location = location.trim(), description = trimmed, severity = severity)
+                    } else {
+                        TrafficReport(type = selectedType, location = location.trim(), description = trimmed, severity = severity)
+                    }
+                    onSubmit(report)
+                },
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(stringResource(R.string.button_submit), fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun ReportFormScreenPreview() {
-    X9ComposeTheme(darkTheme = false) {
+private fun ReportFormScreenAddPreview() {
+    X9ComposeTheme(darkTheme = true) {
         ReportFormScreen(onSubmit = {}, onBack = {})
     }
 }

@@ -12,6 +12,10 @@ import dk.itu.moapd.x9.s25134.model.TrafficReport
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.time.ZoneId
+import java.util.Locale
 
 // ViewModels are like the Controllers + Services in a typical backend.
 // It handles the business logic and data processing in an Android application.
@@ -26,6 +30,16 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
         private const val TAG = "ReportListViewModel"
         const val PREFS_NAME = "x9_prefs"
         const val KEY_DARK_MODE = "dark_mode"
+
+        // Companion object to convert the timestamps stored in the model to human-readable time
+        private val timestampFormatter: DateTimeFormatter
+            get() = DateTimeFormatter
+                .ofPattern("yyyy-MM-dd HH:mm:ss z")
+                .withZone(ZoneId.systemDefault())
+                .withLocale(Locale.getDefault())
+
+        private fun formatTs(epochMillis: Long): String =
+            timestampFormatter.format(Instant.ofEpochMilli(epochMillis))
     }
 
     private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -38,6 +52,7 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
     val isDarkMode: StateFlow<Boolean?> = _isDarkMode.asStateFlow()
 
     fun setDarkMode(enabled: Boolean) {
+        Log.d(TAG, "Dark mode set to $enabled")
         _isDarkMode.value = enabled
         prefs.edit { putBoolean(KEY_DARK_MODE, enabled) }
     }
@@ -49,24 +64,35 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
     // Initialize the report list with the dummy reports
     init {
         _reports.value = listOf(
-            TrafficReport("Accident", "Multi-car collision blocking two lanes on highway E45 near exit 12", Severity.CRITICAL),
-            TrafficReport("Heavy Traffic", "Slow-moving traffic on Lyngbyvejen towards city centre", Severity.MODERATE),
-            TrafficReport("Speed Camera", "Mobile speed camera spotted near Nørreport station", Severity.MINOR),
-            TrafficReport("Road Work", "Lane closure on Amager Strandvej due to road resurfacing", Severity.HIGH),
-            TrafficReport("Heavy Traffic", "Congestion building on Hillerødmotorvejen after morning rush", Severity.LOW),
-            TrafficReport("Accident", "Minor fender-bender on Østerbrogade, right lane blocked", Severity.MODERATE),
-            TrafficReport("Road Work", "Utility maintenance causing delays on Vesterbrogade", Severity.LOW),
-            TrafficReport("Speed Camera", "Fixed speed camera active at Folehaven 60 km/h zone", Severity.MINOR)
+            TrafficReport("Accident", "Multi-car collision blocking two lanes on highway E45 near exit 12", Severity.CRITICAL, location = "Highway E45"),
+            TrafficReport("Heavy Traffic", "Slow-moving traffic on Lyngbyvejen towards city centre", Severity.MODERATE, location = "Lyngbyvejen"),
+            TrafficReport("Speed Camera", "Mobile speed camera spotted near Nørreport station", Severity.MINOR, location = "Nørreport Station"),
+            TrafficReport("Road Work", "Lane closure on Amager Strandvej due to road resurfacing", Severity.HIGH, location = "Amager Strandvej"),
+            TrafficReport("Heavy Traffic", "Congestion building on Hillerødmotorvejen after morning rush", Severity.LOW, location = "Hillerødmotorvejen"),
+            TrafficReport("Accident", "Minor fender-bender on Østerbrogade, right lane blocked", Severity.MODERATE, location = "Østerbrogade"),
+            TrafficReport("Road Work", "Utility maintenance causing delays on Vesterbrogade", Severity.LOW, location = "Vesterbrogade"),
+            TrafficReport("Speed Camera", "Fixed speed camera active at Folehaven 60 km/h zone", Severity.MINOR, location = "Folehaven")
         )
+        Log.d(TAG, "ViewModel initialised with ${_reports.value?.size} seed reports")
     }
 
     fun addReport(report: TrafficReport) {
-        Log.d(TAG, "Report submitted — type: ${report.type}, severity: ${report.severity.level}/5, description: ${report.description}")
+        Log.d(TAG, "Report submitted - type: ${report.type}, location: ${report.location}, severity: ${report.severity.level}/5, description: ${report.description}, createdAt: ${formatTs(report.createdAt)}")
         val current = _reports.value.orEmpty()
-        _reports.value = (current + report).sortedByDescending { it.timestamp }
+        _reports.value = (current + report).sortedByDescending { it.createdAt }
     }
 
     fun deleteReport(id: String) {
+        val report = _reports.value.orEmpty().find { it.id == id }
+        Log.d(TAG, "Deleting report: id=$id, type=${report?.type}, severity=${report?.severity?.level}/5, createdAt=${report?.createdAt?.let { formatTs(it) }}")
         _reports.value = _reports.value.orEmpty().filter { it.id != id }
+    }
+
+    fun updateReport(updated: TrafficReport) {
+        val stamped = updated.copy(updatedAt = Instant.now().toEpochMilli())
+        Log.d(TAG, "Updating report: id=${stamped.id}, type=${stamped.type}, severity=${stamped.severity.level}/5, description: ${stamped.description}, updatedAt: ${formatTs(stamped.updatedAt)}")
+        _reports.value = _reports.value.orEmpty().map {
+            if (it.id == stamped.id) stamped else it
+        }
     }
 }

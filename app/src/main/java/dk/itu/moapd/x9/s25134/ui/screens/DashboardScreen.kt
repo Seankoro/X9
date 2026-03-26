@@ -1,6 +1,7 @@
 package dk.itu.moapd.x9.s25134.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
+import dk.itu.moapd.x9.s25134.model.User
 import dk.itu.moapd.x9.s25134.ui.components.StatCard
 import dk.itu.moapd.x9.s25134.ui.components.TrafficReportCard
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
@@ -65,9 +67,11 @@ private fun timeGreeting(): String {
 @Composable
 fun DashboardScreen(
     reports: List<TrafficReport>,
+    currentUser: User?,
     onNavigateToAdd: () -> Unit,
     onNavigateToReports: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToProfile: () -> Unit,
     paddingValues: PaddingValues = PaddingValues()
 ) {
     val showComingSoon = remember { mutableStateOf(false) }
@@ -109,13 +113,22 @@ fun DashboardScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = stringResource(R.string.greeting_welcome_back),
+                        text = stringResource(
+                            R.string.greeting_welcome_back_user,
+                            currentUser?.displayName ?: stringResource(R.string.label_guest)
+                        ),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
-                // Avatar placeholder
+                // Avatar — tappable shortcut to Profile
+                val avatarInitials = currentUser?.displayName
+                    ?.split(" ")
+                    ?.filter { it.isNotBlank() }
+                    ?.take(2)
+                    ?.joinToString("") { it.first().uppercase() }
+                    ?.ifEmpty { currentUser.email.first().uppercase() }
                 Box(
                     modifier = Modifier
                         .size(44.dp)
@@ -127,10 +140,20 @@ fun DashboardScreen(
                                     MaterialTheme.colorScheme.secondary
                                 )
                             )
-                        ),
+                        )
+                        .clickable { onNavigateToProfile() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "👤", fontSize = 18.sp)
+                    if (avatarInitials != null) {
+                        Text(
+                            text = avatarInitials,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text(text = "👤", fontSize = 18.sp)
+                    }
                 }
             }
         }
@@ -167,7 +190,7 @@ fun DashboardScreen(
             ) {
                 StatCard(
                     emoji = "📋",
-                    count = "0",
+                    count = "${reports.count { it.creatorId == currentUser?.uid }}",
                     label = stringResource(R.string.stat_your_reports),
                     accentColor = colorResource(R.color.accent_blue),
                     modifier = Modifier.weight(1f).aspectRatio(1.45f)
@@ -298,9 +321,11 @@ private fun DashboardScreenPreview() {
                 TrafficReport("Accident", "Multi-car collision on E45", Severity.CRITICAL, location = "Highway E45"),
                 TrafficReport("Heavy Traffic", "Slow traffic on Lyngbyvejen", Severity.MODERATE, location = "Lyngbyvejen")
             ),
+            currentUser = null,
             onNavigateToAdd = {},
             onNavigateToReports = {},
-            onNavigateToDetail = {}
+            onNavigateToDetail = {},
+            onNavigateToProfile = {}
         )
     }
 }

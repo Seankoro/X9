@@ -1,17 +1,27 @@
 package dk.itu.moapd.x9.s25134.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -21,18 +31,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dk.itu.moapd.x9.s25134.R
+import dk.itu.moapd.x9.s25134.model.User
 import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 
 @Composable
 fun ProfileScreen(
+    currentUser: User?,
     isDarkMode: Boolean,
     onToggleDarkMode: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onSignOut: () -> Unit,
     paddingValues: PaddingValues = PaddingValues()
 ) {
     val showComingSoon = remember { mutableStateOf(false) }
@@ -57,7 +73,90 @@ fun ProfileScreen(
     ) {
         ScreenHeader(title = stringResource(R.string.nav_profile))
 
-        // Dark mode toggle — functional
+        if (currentUser == null) {
+            // Unauthenticated state — prompt to sign in
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.btn_sign_in_register),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Button(
+                    onClick = onNavigateToLogin,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.btn_sign_in_register),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        } else {
+            // Authenticated state — user info header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Initials avatar
+                val initials = currentUser.displayName
+                    .split(" ")
+                    .filter { it.isNotBlank() }
+                    .take(2)
+                    .joinToString("") { it.first().uppercase() }
+                    .ifEmpty { currentUser.email.first().uppercase() }
+
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = initials,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = currentUser.displayName,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = currentUser.email,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding)))
+        }
+
+        // Dark mode toggle — always shown
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -91,7 +190,6 @@ fun ProfileScreen(
 
         // Coming-soon items
         listOf(
-            stringResource(R.string.profile_account),
             stringResource(R.string.profile_notifications),
             stringResource(R.string.profile_about)
         ).forEach { label ->
@@ -116,13 +214,56 @@ fun ProfileScreen(
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding)))
         }
+
+        // Sign Out button — only when authenticated
+        if (currentUser != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = onSignOut,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding))
+                    .height(48.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+            ) {
+                Text(
+                    text = stringResource(R.string.btn_sign_out),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun ProfileScreenPreview() {
+private fun ProfileScreenAuthenticatedPreview() {
     X9ComposeTheme(darkTheme = true) {
-        ProfileScreen(isDarkMode = true, onToggleDarkMode = {})
+        ProfileScreen(
+            currentUser = User("uid1", "Jane Doe", "jane@example.com"),
+            isDarkMode = true,
+            onToggleDarkMode = {},
+            onNavigateToLogin = {},
+            onSignOut = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ProfileScreenUnauthenticatedPreview() {
+    X9ComposeTheme(darkTheme = true) {
+        ProfileScreen(
+            currentUser = null,
+            isDarkMode = false,
+            onToggleDarkMode = {},
+            onNavigateToLogin = {},
+            onSignOut = {}
+        )
     }
 }

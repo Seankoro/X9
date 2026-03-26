@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
+import dk.itu.moapd.x9.s25134.model.User
 import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
 import dk.itu.moapd.x9.s25134.ui.components.severityLabel
 import dk.itu.moapd.x9.s25134.ui.components.typeEmoji
@@ -55,6 +56,7 @@ import java.util.Locale
 fun ReportDetailScreen(
     reportId: String,
     reports: List<TrafficReport>,
+    currentUser: User?,
     onBack: () -> Unit,
     onEdit: (String) -> Unit,
     onDelete: (String) -> Unit,
@@ -186,28 +188,30 @@ fun ReportDetailScreen(
             )
         }
 
-        // Edit + Delete buttons
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedButton(
-                onClick = { onEdit(report.id) },
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(28.dp)
+        // Edit + Delete buttons — only shown to the report's creator
+        if (report.creatorId == currentUser?.uid) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(stringResource(R.string.edit_label), fontWeight = FontWeight.SemiBold)
-            }
-            OutlinedButton(
-                onClick = { showDeleteDialog.value = true },
-                modifier = Modifier.weight(1f).height(48.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
-            ) {
-                Text(stringResource(R.string.delete_label), fontWeight = FontWeight.SemiBold)
+                OutlinedButton(
+                    onClick = { onEdit(report.id) },
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Text(stringResource(R.string.edit_label), fontWeight = FontWeight.SemiBold)
+                }
+                OutlinedButton(
+                    onClick = { showDeleteDialog.value = true },
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete_label), fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     }
@@ -220,6 +224,7 @@ private fun ReportDetailScreenPreview() {
         ReportDetailScreen(
             reportId = "preview",
             reports = listOf(TrafficReport("Accident", "Multi-car collision blocking two lanes on E45", Severity.CRITICAL, location = "Highway E45", id = "preview")),
+            currentUser = null,
             onBack = {}, onEdit = {}, onDelete = {}
         )
     }

@@ -18,6 +18,7 @@ data class TrafficReport(
     val severity: Severity,
     val location: String = "",
     val id: String = UUID.randomUUID().toString(), // UUID ensures uniqueness
+    val creatorId: String = "",                    // Firebase Auth uid of the creator
     val createdAt: Long = Instant.now().toEpochMilli(),
     val updatedAt: Long = Instant.now().toEpochMilli()
 )

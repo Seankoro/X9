@@ -41,7 +41,9 @@ import androidx.compose.ui.unit.dp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
+import dk.itu.moapd.x9.s25134.model.User
 import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
+import java.time.Instant
 import dk.itu.moapd.x9.s25134.ui.components.severityLabel
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 import kotlin.math.roundToInt
@@ -51,6 +53,7 @@ import kotlin.math.roundToInt
 fun ReportFormScreen(
     reportId: String? = null,
     reports: List<TrafficReport> = emptyList(),
+    currentUser: User? = null,
     onSubmit: (TrafficReport) -> Unit,
     onBack: () -> Unit,
     paddingValues: PaddingValues = PaddingValues()
@@ -201,12 +204,30 @@ fun ReportFormScreen(
                 onClick = {
                     val trimmed = description.trim()
                     if (trimmed.isEmpty()) { descriptionError = errorEmptyDescription; return@Button }
-                    val report = if (isEditMode) {
-                        existingReport.copy(type = selectedType, location = location.trim(), description = trimmed, severity = severity)
+                    if (reportId == null) {
+                        onSubmit(
+                            TrafficReport(
+                                type = selectedType,
+                                description = trimmed,
+                                severity = severity,
+                                location = location.trim(),
+                                creatorId = currentUser?.uid ?: ""
+                            )
+                        )
                     } else {
-                        TrafficReport(type = selectedType, location = location.trim(), description = trimmed, severity = severity)
+                        // Edit mode — preserve creatorId and createdAt from original report
+                        onSubmit(
+                            TrafficReport(
+                                type = selectedType,
+                                description = trimmed,
+                                severity = severity,
+                                location = location.trim(),
+                                id = reportId,
+                                creatorId = existingReport?.creatorId ?: "",
+                                createdAt = existingReport?.createdAt ?: Instant.now().toEpochMilli()
+                            )
+                        )
                     }
-                    onSubmit(report)
                 },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(28.dp),

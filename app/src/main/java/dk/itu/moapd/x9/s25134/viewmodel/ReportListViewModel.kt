@@ -61,7 +61,10 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
     private val _reports = MutableLiveData<List<TrafficReport>>()
     val reports: LiveData<List<TrafficReport>> = _reports
 
-    // Initialize the report list with the dummy reports
+    // Initialize the report list with the dummy reports.
+    // Note: seed reports have creatorId = "" (the default). No authenticated user will ever have
+    // uid == "", so Edit/Delete controls are intentionally hidden on these reports. To demo
+    // creator-gated actions, sign in and create a new report.
     init {
         _reports.value = listOf(
             TrafficReport("Accident", "Multi-car collision blocking two lanes on highway E45 near exit 12", Severity.CRITICAL, location = "Highway E45"),

@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
+import dk.itu.moapd.x9.s25134.model.User
 import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
 import dk.itu.moapd.x9.s25134.ui.components.TrafficReportCard
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
@@ -51,6 +52,7 @@ import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 @Composable
 fun ReportListScreen(
     reports: List<TrafficReport>,
+    currentUser: User?,
     onNavigateToDetail: (String) -> Unit,
     onNavigateToEdit: (String) -> Unit,
     onDeleteReport: (String) -> Unit,
@@ -154,6 +156,7 @@ fun ReportListScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             items(items = filteredReports, key = { it.id }) { report ->
+                val isCreator = report.creatorId == currentUser?.uid
                 val dismissState = rememberSwipeToDismissBoxState(
                     confirmValueChange = { value ->
                         when (value) {
@@ -170,8 +173,8 @@ fun ReportListScreen(
                 )
                 SwipeToDismissBox(
                     state = dismissState,
-                    enableDismissFromStartToEnd = true,
-                    enableDismissFromEndToStart = true,
+                    enableDismissFromStartToEnd = isCreator,
+                    enableDismissFromEndToStart = isCreator,
                     backgroundContent = {
                         val isEditSwipe = dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd
                         val isDeleteSwipe = dismissState.targetValue == SwipeToDismissBoxValue.EndToStart
@@ -224,6 +227,7 @@ private fun ReportListScreenPreview() {
                 TrafficReport("Accident", "Multi-car collision on E45", Severity.CRITICAL, location = "Highway E45"),
                 TrafficReport("Heavy Traffic", "Slow traffic on Lyngbyvejen", Severity.MODERATE, location = "Lyngbyvejen")
             ),
+            currentUser = null,
             onNavigateToDetail = {},
             onNavigateToEdit = {},
             onDeleteReport = {}

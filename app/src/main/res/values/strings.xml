@@ -31,11 +31,30 @@
     <string name="label_location">Location</string>
     <string name="hint_location">E.g. Highway E45, Nørreport…</string>
 
-    <!-- Login -->
+    <!-- Login / Authentication -->
     <string name="btn_sign_in_google">Sign in with Google</string>
+    <string name="label_sign_in">Sign In</string>
+    <string name="label_register">Register</string>
+    <string name="hint_display_name">Display Name</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_confirm_password">Confirm Password</string>
+    <string name="btn_sign_in_email">Sign In</string>
+    <string name="btn_register">Register</string>
+    <string name="btn_sign_out">Sign Out</string>
+    <string name="btn_sign_in_register">Sign In / Register</string>
+    <string name="label_or_divider">OR</string>
+    <string name="error_passwords_no_match">Passwords do not match</string>
+    <string name="error_fields_required">Please fill in all fields</string>
+    <string name="error_auth_generic">Authentication failed. Please try again.</string>
+    <string name="error_google_sign_in_failed">Google Sign-In failed</string>
+    <string name="brand_name_prefix">X</string>
+    <string name="brand_name_suffix">9</string>
+    <string name="msg_sign_in_required">Sign in to create reports</string>
+    <string name="label_guest">Guest</string>
+    <string name="btn_continue_as_guest">Continue as guest</string>
     <string name="coming_soon_title">Coming Soon</string>
-    <string name="coming_soon_auth_message">Google Sign-In will be available in a future update.</string>
-    <string name="coming_soon_message">This feature is not yet available.</string>
+<string name="coming_soon_message">This feature is not yet available.</string>
     <string name="ok_label">OK</string>
 
     <!-- Navigation tabs -->
@@ -60,6 +79,7 @@
     <string name="greeting_afternoon">Good afternoon</string>
     <string name="greeting_evening">Good evening</string>
     <string name="greeting_welcome_back">Welcome back 👋</string>
+    <string name="greeting_welcome_back_user">Welcome back, %1$s 👋</string>
 
     <!-- Content descriptions -->
     <string name="cd_back">Back</string>

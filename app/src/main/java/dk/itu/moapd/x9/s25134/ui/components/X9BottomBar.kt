@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -67,7 +67,7 @@ fun X9BottomBar(
                 onClick = onHomeClick
             )
             BottomNavItem(
-                icon = Icons.Default.List,
+                icon = Icons.AutoMirrored.Filled.List,
                 label = stringResource(R.string.nav_reports),
                 selected = isReportsActive,
                 onClick = onReportsClick

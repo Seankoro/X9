@@ -80,7 +80,7 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_medium))
             ) {
                 Text(
                     text = stringResource(R.string.btn_sign_in_register),
@@ -91,8 +91,8 @@ fun ProfileScreen(
                     onClick = onNavigateToLogin,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(28.dp),
+                        .height(dimensionResource(R.dimen.button_height_primary)),
+                    shape = RoundedCornerShape(dimensionResource(R.dimen.button_corner_radius)),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
@@ -110,7 +110,7 @@ fun ProfileScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 20.dp),
+                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = dimensionResource(R.dimen.screen_header_vertical_padding)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Initials avatar
@@ -136,7 +136,7 @@ fun ProfileScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(dimensionResource(R.dimen.spacing_medium)))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -160,7 +160,7 @@ fun ProfileScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 16.dp),
+                .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = dimensionResource(R.dimen.spacing_medium)),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -175,7 +175,7 @@ fun ProfileScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(dimensionResource(R.dimen.spacing_medium)))
             Switch(
                 checked = isDarkMode,
                 onCheckedChange = { onToggleDarkMode() },
@@ -217,14 +217,14 @@ fun ProfileScreen(
 
         // Sign Out button — only when authenticated
         if (currentUser != null) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
             OutlinedButton(
                 onClick = onSignOut,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding))
-                    .height(48.dp),
-                shape = RoundedCornerShape(28.dp),
+                    .height(dimensionResource(R.dimen.button_height_secondary)),
+                shape = RoundedCornerShape(dimensionResource(R.dimen.button_corner_radius)),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colorScheme.error
                 ),

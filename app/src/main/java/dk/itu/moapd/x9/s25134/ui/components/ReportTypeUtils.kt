@@ -7,6 +7,7 @@ import androidx.compose.ui.res.stringResource
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 
+// Helper function to map report type to emojis
 fun typeEmoji(type: String): String = when (type) {
     "Accident"      -> "🚨"
     "Heavy Traffic" -> "🚗"

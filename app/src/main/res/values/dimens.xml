@@ -11,7 +11,21 @@
 
     <!-- Screens -->
     <dimen name="screen_horizontal_padding">20dp</dimen>
+    <dimen name="screen_header_vertical_padding">20dp</dimen>
     <dimen name="filter_label_padding_start">20dp</dimen>
     <dimen name="filter_chips_padding_horizontal">16dp</dimen>
     <dimen name="filter_chips_spacing">8dp</dimen>
+
+    <!-- Buttons -->
+    <dimen name="button_height_primary">52dp</dimen>
+    <dimen name="button_height_secondary">48dp</dimen>
+    <dimen name="button_corner_radius">28dp</dimen>
+
+    <!-- Text fields -->
+    <dimen name="text_field_corner_radius">12dp</dimen>
+
+    <!-- Spacing -->
+    <dimen name="spacing_small">8dp</dimen>
+    <dimen name="spacing_medium">16dp</dimen>
+    <dimen name="spacing_large">24dp</dimen>
 </resources>

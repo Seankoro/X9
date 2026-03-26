@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
@@ -40,8 +38,6 @@ import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-// typeEmoji() and severityBgColor() live in ReportTypeUtils.kt (shared with ReportDetailScreen)
 
 @Composable
 private fun severityColor(severity: Severity): Color = when (severity) {
@@ -88,7 +84,7 @@ fun TrafficReportCard(
                 Text(text = typeEmoji(report.type), fontSize = 20.sp)
             }
 
-            // Centre: title + location/time row
+            // Center: title + location/time row
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = report.description,

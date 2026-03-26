@@ -111,7 +111,7 @@ fun ReportFormScreen(
         Column(
             modifier = Modifier
                 .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding))
-                .padding(top = 16.dp, bottom = 24.dp)
+                .padding(top = dimensionResource(R.dimen.spacing_medium), bottom = dimensionResource(R.dimen.spacing_large))
         ) {
             // Type dropdown
             Text(
@@ -129,7 +129,7 @@ fun ReportFormScreen(
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius)),
                     modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
                 )
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -139,7 +139,7 @@ fun ReportFormScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
 
             // Location field
             OutlinedTextField(
@@ -147,12 +147,12 @@ fun ReportFormScreen(
                 onValueChange = { location = it },
                 label = { Text(stringResource(R.string.label_location)) },
                 placeholder = { Text(stringResource(R.string.hint_location)) },
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius)),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
 
             // Description field
             OutlinedTextField(
@@ -165,12 +165,12 @@ fun ReportFormScreen(
                 placeholder = { Text(stringResource(R.string.hint_description)) },
                 isError = descriptionError != null,
                 supportingText = descriptionError?.let { { Text(it) } },
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius)),
                 modifier = Modifier.fillMaxWidth().height(120.dp),
                 maxLines = 4
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
 
             // Severity slider
             Text(
@@ -197,7 +197,7 @@ fun ReportFormScreen(
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_large)))
 
             // Submit button
             Button(
@@ -229,8 +229,8 @@ fun ReportFormScreen(
                         )
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(28.dp),
+                modifier = Modifier.fillMaxWidth().height(dimensionResource(R.dimen.button_height_primary)),
+                shape = RoundedCornerShape(dimensionResource(R.dimen.button_corner_radius)),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary

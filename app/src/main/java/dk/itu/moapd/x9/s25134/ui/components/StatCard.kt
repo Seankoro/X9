@@ -19,12 +19,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
+import dk.itu.moapd.x9.s25134.R
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 
+// Component to display total number of reports in the dashboard
 @Composable
 fun StatCard(
     emoji: String,
@@ -49,7 +52,7 @@ fun StatCard(
                     .clip(CircleShape)
                     .align(Alignment.TopEnd)
                     .then(
-                        Modifier.padding(0.dp) // clip container; colour applied via background
+                        Modifier.padding(0.dp) // clip container; color applied via background
                     )
             ) {
                 Box(
@@ -60,7 +63,7 @@ fun StatCard(
                 )
             }
             Column(
-                modifier = Modifier.padding(start = 16.dp, top = 18.dp, bottom = 16.dp, end = 16.dp)
+                modifier = Modifier.padding(start = dimensionResource(R.dimen.spacing_medium), top = 18.dp, bottom = dimensionResource(R.dimen.spacing_medium), end = dimensionResource(R.dimen.spacing_medium))
             ) {
                 Text(text = emoji, fontSize = 22.sp)
                 Text(
@@ -68,7 +71,7 @@ fun StatCard(
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = accentColor,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = dimensionResource(R.dimen.spacing_small))
                 )
                 Text(
                     text = label,

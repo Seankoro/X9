@@ -4,5 +4,5 @@ data class User(
     val uid: String,
     val displayName: String,
     val email: String,
-    val photoUrl: String = ""
+    val photoUrl: String = "" // Only added for future extensibility to allow profile pictures
 )

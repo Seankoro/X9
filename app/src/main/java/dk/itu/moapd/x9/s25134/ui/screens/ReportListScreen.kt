@@ -116,7 +116,7 @@ fun ReportListScreen(
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = dimensionResource(R.dimen.filter_chips_padding_horizontal), vertical = 8.dp)
+                .padding(horizontal = dimensionResource(R.dimen.filter_chips_padding_horizontal), vertical = dimensionResource(R.dimen.spacing_small))
         )
 
         // Filter chips
@@ -146,14 +146,14 @@ fun ReportListScreen(
             text = stringResource(R.string.report_count, filteredReports.size),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = dimensionResource(R.dimen.filter_label_padding_start), top = 8.dp, bottom = 4.dp)
+            modifier = Modifier.padding(start = dimensionResource(R.dimen.filter_label_padding_start), top = dimensionResource(R.dimen.spacing_small), bottom = 4.dp)
         )
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            contentPadding = PaddingValues(bottom = 16.dp)
+            contentPadding = PaddingValues(bottom = dimensionResource(R.dimen.spacing_medium))
         ) {
             items(items = filteredReports, key = { it.id }) { report ->
                 val isCreator = report.creatorId == currentUser?.uid
@@ -188,7 +188,7 @@ fun ReportListScreen(
                                         else          -> MaterialTheme.colorScheme.background
                                     }
                                 )
-                                .padding(horizontal = 20.dp),
+                                .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding)),
                             contentAlignment = if (isEditSwipe) Alignment.CenterStart else Alignment.CenterEnd
                         ) {
                             when {

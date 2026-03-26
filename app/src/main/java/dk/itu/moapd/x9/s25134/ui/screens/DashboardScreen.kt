@@ -96,14 +96,14 @@ fun DashboardScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues),
-        contentPadding = PaddingValues(bottom = 16.dp)
+        contentPadding = PaddingValues(bottom = dimensionResource(R.dimen.spacing_medium))
     ) {
         // Greeting header
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 20.dp),
+                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = dimensionResource(R.dimen.screen_header_vertical_padding)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -212,7 +212,7 @@ fun DashboardScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = dimensionResource(R.dimen.screen_horizontal_padding), top = 24.dp, bottom = 12.dp)
+                modifier = Modifier.padding(start = dimensionResource(R.dimen.screen_horizontal_padding), top = dimensionResource(R.dimen.spacing_large), bottom = 12.dp)
             )
             Row(
                 modifier = Modifier
@@ -246,7 +246,7 @@ fun DashboardScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 16.dp),
+                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = dimensionResource(R.dimen.spacing_medium)),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -292,9 +292,9 @@ private fun QuickActionButton(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp),
+                .padding(vertical = dimensionResource(R.dimen.spacing_medium)),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_small))
         ) {
             Icon(
                 imageVector = icon,

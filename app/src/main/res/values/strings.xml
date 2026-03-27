@@ -51,10 +51,12 @@
     <string name="brand_name_prefix">X</string>
     <string name="brand_name_suffix">9</string>
     <string name="msg_sign_in_required">Sign in to create reports</string>
+    <string name="error_not_owner_edit">You can only edit your own reports</string>
+    <string name="error_not_owner_delete">You can only delete your own reports</string>
     <string name="label_guest">Guest</string>
     <string name="btn_continue_as_guest">Continue as guest</string>
     <string name="coming_soon_title">Coming Soon</string>
-<string name="coming_soon_message">This feature is not yet available.</string>
+    <string name="coming_soon_message">This feature is not yet available.</string>
     <string name="ok_label">OK</string>
 
     <!-- Navigation tabs -->

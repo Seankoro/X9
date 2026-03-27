@@ -71,6 +71,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            LaunchedEffect(Unit) {
+                viewModel.error.collect { message ->
+                    snackbarHostState.showSnackbar(message)
+                }
+            }
+
             // React to auth state: navigate home when user signs in while on login screen
             LaunchedEffect(currentUser) {
                 if (currentUser != null && currentRoute == "login") {
@@ -189,7 +195,7 @@ class MainActivity : ComponentActivity() {
                                 currentUser = currentUser,
                                 onNavigateToDetail = { id -> navController.navigate("detail/$id") },
                                 onNavigateToEdit = { id -> navController.navigate("edit/$id") },
-                                onDeleteReport = { viewModel.deleteReport(it) },
+                                onDeleteReport = { viewModel.deleteReport(it, currentUser?.uid) },
                                 paddingValues = paddingValues
                             )
                         }
@@ -199,7 +205,7 @@ class MainActivity : ComponentActivity() {
                                 reports = reports,
                                 currentUser = currentUser,
                                 onSubmit = { report ->
-                                    viewModel.addReport(report)
+                                    viewModel.addReport(report, currentUser?.uid)
                                     navController.popBackStack()
                                 },
                                 onBack = { navController.popBackStack() },
@@ -215,7 +221,7 @@ class MainActivity : ComponentActivity() {
                                 onBack = { navController.popBackStack() },
                                 onEdit = { id -> navController.navigate("edit/$id") },
                                 onDelete = { id ->
-                                    viewModel.deleteReport(id)
+                                    viewModel.deleteReport(id, currentUser?.uid)
                                     navController.popBackStack()
                                 },
                                 paddingValues = paddingValues
@@ -228,7 +234,7 @@ class MainActivity : ComponentActivity() {
                                 reports = reports,
                                 currentUser = currentUser,
                                 onSubmit = { report ->
-                                    viewModel.updateReport(report)
+                                    viewModel.updateReport(report, currentUser?.uid)
                                     navController.popBackStack()
                                 },
                                 onBack = { navController.popBackStack() },

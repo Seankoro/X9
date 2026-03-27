@@ -18,6 +18,7 @@
     <string name="keep_editing">Keep Editing</string>
     <string name="discard">Discard</string>
     <string name="filter_all">All</string>
+    <string name="filter_my_reports">My Reports</string>
     <string name="report_count">%1$d report(s)</string>
     <string name="delete_label">Delete</string>
     <string name="cancel_label">Cancel</string>

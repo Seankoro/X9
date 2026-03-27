@@ -59,16 +59,19 @@ fun ReportListScreen(
     paddingValues: PaddingValues = PaddingValues()
 ) {
     val allLabel = stringResource(R.string.filter_all)
+    val myReportsLabel = stringResource(R.string.filter_my_reports)
     val trafficTypes = stringArrayResource(R.array.traffic_types)
     val filterOptions = listOf(allLabel) + trafficTypes
 
     var selectedFilter by remember { mutableStateOf<String?>(null) }
+    var myReportsOnly by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     val reportToDelete = remember { mutableStateOf<TrafficReport?>(null) }
 
-    val filteredReports = remember(reports, selectedFilter, searchQuery) {
+    val filteredReports = remember(reports, selectedFilter, myReportsOnly, searchQuery) {
         reports
             .let { list -> if (selectedFilter == null) list else list.filter { it.type == selectedFilter } }
+            .let { list -> if (!myReportsOnly) list else list.filter { it.creatorId == currentUser?.uid } }
             .let { list ->
                 if (searchQuery.isBlank()) list
                 else list.filter {
@@ -127,6 +130,15 @@ fun ReportListScreen(
                 .padding(horizontal = dimensionResource(R.dimen.filter_chips_padding_horizontal)),
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.filter_chips_spacing))
         ) {
+            FilterChip(
+                selected = myReportsOnly,
+                onClick = { myReportsOnly = !myReportsOnly },
+                label = { Text(myReportsLabel) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.secondary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onSecondary
+                )
+            )
             filterOptions.forEach { filter ->
                 val isAll = filter == allLabel
                 FilterChip(

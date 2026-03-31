@@ -14,10 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
@@ -43,7 +41,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
@@ -69,7 +66,10 @@ fun DashboardScreen(
     reports: List<TrafficReport>,
     currentUser: User?,
     onNavigateToAdd: () -> Unit,
+    onNavigateToMap: () -> Unit,
     onNavigateToReports: () -> Unit,
+    onNavigateToCriticalReports: () -> Unit,
+    onNavigateToMyReports: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     paddingValues: PaddingValues = PaddingValues()
@@ -131,8 +131,8 @@ fun DashboardScreen(
                     ?.ifEmpty { currentUser.email.first().uppercase() }
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(dimensionResource(R.dimen.icon_box_size))
+                        .clip(RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)))
                         .background(
                             Brush.linearGradient(
                                 listOf(
@@ -164,7 +164,7 @@ fun DashboardScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding)),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))
             ) {
                 StatCard(
                     emoji = "📡",
@@ -178,22 +178,24 @@ fun DashboardScreen(
                     count = "$criticalCount",
                     label = stringResource(R.string.stat_critical_alerts),
                     accentColor = colorResource(R.color.accent_pink),
-                    modifier = Modifier.weight(1f).aspectRatio(1.45f)
+                    modifier = Modifier.weight(1f).aspectRatio(1.45f),
+                    onClick = onNavigateToCriticalReports
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.item_spacing)))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding)),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))
             ) {
                 StatCard(
                     emoji = "📋",
                     count = "${reports.count { it.creatorId == currentUser?.uid }}",
                     label = stringResource(R.string.stat_your_reports),
                     accentColor = colorResource(R.color.accent_blue),
-                    modifier = Modifier.weight(1f).aspectRatio(1.45f)
+                    modifier = Modifier.weight(1f).aspectRatio(1.45f),
+                    onClick = if (currentUser != null) onNavigateToMyReports else null
                 )
                 StatCard(
                     emoji = "✅",
@@ -212,13 +214,13 @@ fun DashboardScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = dimensionResource(R.dimen.screen_horizontal_padding), top = dimensionResource(R.dimen.spacing_large), bottom = 12.dp)
+                modifier = Modifier.padding(start = dimensionResource(R.dimen.screen_horizontal_padding), top = dimensionResource(R.dimen.spacing_large), bottom = dimensionResource(R.dimen.item_spacing))
             )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding)),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))
             ) {
                 QuickActionButton(
                     icon = Icons.Default.PostAdd,
@@ -229,7 +231,7 @@ fun DashboardScreen(
                 QuickActionButton(
                     icon = Icons.Default.Map,
                     label = stringResource(R.string.quick_action_view_map),
-                    onClick = { showComingSoon.value = true },
+                    onClick = onNavigateToMap,
                     modifier = Modifier.weight(1f)
                 )
                 QuickActionButton(
@@ -285,7 +287,7 @@ private fun QuickActionButton(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         onClick = onClick
     ) {
@@ -300,7 +302,7 @@ private fun QuickActionButton(
                 imageVector = icon,
                 contentDescription = label,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(dimensionResource(R.dimen.quick_action_icon_size))
             )
             Text(
                 text = label,
@@ -318,12 +320,15 @@ private fun DashboardScreenPreview() {
     X9ComposeTheme(darkTheme = true) {
         DashboardScreen(
             reports = listOf(
-                TrafficReport("Accident", "Multi-car collision on E45", Severity.CRITICAL, location = "Highway E45"),
-                TrafficReport("Heavy Traffic", "Slow traffic on Lyngbyvejen", Severity.MODERATE, location = "Lyngbyvejen")
+                TrafficReport("Accident", "Multi-car collision on E45", Severity.CRITICAL),
+                TrafficReport("Heavy Traffic", "Slow traffic on Lyngbyvejen", Severity.MODERATE)
             ),
             currentUser = null,
             onNavigateToAdd = {},
+            onNavigateToMap = {},
             onNavigateToReports = {},
+            onNavigateToCriticalReports = {},
+            onNavigateToMyReports = {},
             onNavigateToDetail = {},
             onNavigateToProfile = {}
         )

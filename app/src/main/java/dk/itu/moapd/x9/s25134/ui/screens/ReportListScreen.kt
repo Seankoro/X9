@@ -56,6 +56,8 @@ fun ReportListScreen(
     onNavigateToDetail: (String) -> Unit,
     onNavigateToEdit: (String) -> Unit,
     onDeleteReport: (String) -> Unit,
+    initialMyReportsOnly: Boolean = false,
+    initialCriticalOnly: Boolean = false,
     paddingValues: PaddingValues = PaddingValues()
 ) {
     val allLabel = stringResource(R.string.filter_all)
@@ -64,14 +66,16 @@ fun ReportListScreen(
     val filterOptions = listOf(allLabel) + trafficTypes
 
     var selectedFilter by remember { mutableStateOf<String?>(null) }
-    var myReportsOnly by remember { mutableStateOf(false) }
+    var myReportsOnly by remember { mutableStateOf(initialMyReportsOnly) }
+    var criticalOnly by remember { mutableStateOf(initialCriticalOnly) }
     var searchQuery by remember { mutableStateOf("") }
     val reportToDelete = remember { mutableStateOf<TrafficReport?>(null) }
 
-    val filteredReports = remember(reports, selectedFilter, myReportsOnly, searchQuery) {
+    val filteredReports = remember(reports, selectedFilter, myReportsOnly, criticalOnly, searchQuery) {
         reports
             .let { list -> if (selectedFilter == null) list else list.filter { it.type == selectedFilter } }
             .let { list -> if (!myReportsOnly) list else list.filter { it.creatorId == currentUser?.uid } }
+            .let { list -> if (!criticalOnly) list else list.filter { it.severity.level >= 4 } }
             .let { list ->
                 if (searchQuery.isBlank()) list
                 else list.filter {
@@ -236,8 +240,8 @@ private fun ReportListScreenPreview() {
     X9ComposeTheme(darkTheme = true) {
         ReportListScreen(
             reports = listOf(
-                TrafficReport("Accident", "Multi-car collision on E45", Severity.CRITICAL, location = "Highway E45"),
-                TrafficReport("Heavy Traffic", "Slow traffic on Lyngbyvejen", Severity.MODERATE, location = "Lyngbyvejen")
+                TrafficReport("Accident", "Multi-car collision on E45", Severity.CRITICAL),
+                TrafficReport("Heavy Traffic", "Slow traffic on Lyngbyvejen", Severity.MODERATE)
             ),
             currentUser = null,
             onNavigateToDetail = {},

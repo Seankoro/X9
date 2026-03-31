@@ -1,22 +1,33 @@
 package dk.itu.moapd.x9.s25134.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
@@ -25,6 +36,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,20 +44,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
 import dk.itu.moapd.x9.s25134.model.User
 import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
-import java.time.Instant
 import dk.itu.moapd.x9.s25134.ui.components.severityLabel
-import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
+import java.time.Instant
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,17 +67,23 @@ fun ReportFormScreen(
     reportId: String? = null,
     reports: List<TrafficReport> = emptyList(),
     currentUser: User? = null,
+    locationDisplayName: String,
+    locationLat: Double?,
+    locationLng: Double?,
+    isLoadingLocation: Boolean,
+    onRequestLocation: () -> Unit,
+    onOpenLocationPicker: () -> Unit,
     onSubmit: (TrafficReport) -> Unit,
     onBack: () -> Unit,
     paddingValues: PaddingValues = PaddingValues()
 ) {
+    val context = LocalContext.current
     val trafficTypes = stringArrayResource(R.array.traffic_types)
     val existingReport = remember(reportId) { reports.find { it.id == reportId } }
     val isEditMode = existingReport != null
 
     var expanded by remember { mutableStateOf(false) }
     var selectedType by rememberSaveable(reportId) { mutableStateOf(existingReport?.type ?: trafficTypes[0]) }
-    var location by rememberSaveable(reportId) { mutableStateOf(existingReport?.location ?: "") }
     var description by rememberSaveable(reportId) { mutableStateOf(existingReport?.description ?: "") }
     var descriptionError by rememberSaveable(reportId) { mutableStateOf<String?>(null) }
     var severityFloat by rememberSaveable(reportId) {
@@ -72,9 +91,31 @@ fun ReportFormScreen(
     }
 
     val severity: Severity = Severity.entries[severityFloat.roundToInt() - 1]
-    val hasInput = description.isNotBlank() || location.isNotBlank()
+    val hasInput = description.isNotBlank()
     val showDiscardDialog = rememberSaveable { mutableStateOf(false) }
     val errorEmptyDescription = stringResource(R.string.error_empty_description)
+
+    // Permission launcher — requests location and triggers auto-fill if granted
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) ||
+                      permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)
+        if (granted) onRequestLocation()
+    }
+
+    // On form open: request location for new reports; reverse geocode for edits
+    LaunchedEffect(reportId) {
+        if (existingReport == null) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            if (hasPermission) onRequestLocation()
+        }
+    }
 
     BackHandler(enabled = hasInput) { showDiscardDialog.value = true }
 
@@ -119,7 +160,7 @@ fun ReportFormScreen(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xs)))
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
@@ -141,16 +182,37 @@ fun ReportFormScreen(
 
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
 
-            // Location field
-            OutlinedTextField(
-                value = location,
-                onValueChange = { location = it },
-                label = { Text(stringResource(R.string.label_location)) },
-                placeholder = { Text(stringResource(R.string.hint_location)) },
-                shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius)),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Location field — tappable; opens LocationPickerScreen
+            val locationValue = when {
+                isLoadingLocation -> stringResource(R.string.msg_fetching_location)
+                locationDisplayName.isNotBlank() -> locationDisplayName
+                else -> ""
+            }
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = locationValue,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(stringResource(R.string.label_location)) },
+                    placeholder = { Text(stringResource(R.string.hint_tap_to_set_location)) },
+                    leadingIcon = {
+                        if (isLoadingLocation) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        } else {
+                            Icon(Icons.Default.LocationOn, contentDescription = null)
+                        }
+                    },
+                    shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius)),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                // Transparent overlay makes the entire field tappable
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable(enabled = !isLoadingLocation) { onOpenLocationPicker() }
+                )
+            }
 
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
 
@@ -166,7 +228,7 @@ fun ReportFormScreen(
                 isError = descriptionError != null,
                 supportingText = descriptionError?.let { { Text(it) } },
                 shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius)),
-                modifier = Modifier.fillMaxWidth().height(120.dp),
+                modifier = Modifier.fillMaxWidth().height(dimensionResource(R.dimen.text_field_description_height)),
                 maxLines = 4
             )
 
@@ -178,7 +240,16 @@ fun ReportFormScreen(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xs)))
+            val severityColor = colorResource(
+                when (severity) {
+                    Severity.MINOR    -> R.color.severity_minor
+                    Severity.LOW      -> R.color.severity_low
+                    Severity.MODERATE -> R.color.severity_moderate
+                    Severity.HIGH     -> R.color.severity_high
+                    Severity.CRITICAL -> R.color.severity_critical
+                }
+            )
             Slider(
                 value = severityFloat,
                 onValueChange = { severityFloat = it },
@@ -186,8 +257,8 @@ fun ReportFormScreen(
                 steps = 3,
                 modifier = Modifier.fillMaxWidth(),
                 colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary
+                    thumbColor = severityColor,
+                    activeTrackColor = severityColor
                 )
             )
             Text(
@@ -210,18 +281,21 @@ fun ReportFormScreen(
                                 type = selectedType,
                                 description = trimmed,
                                 severity = severity,
-                                location = location.trim(),
+                                latitude = locationLat,
+                                longitude = locationLng,
+                                locationName = locationDisplayName,
                                 creatorId = currentUser?.uid ?: ""
                             )
                         )
                     } else {
-                        // Edit mode — preserve creatorId and createdAt from original report
                         onSubmit(
                             TrafficReport(
                                 type = selectedType,
                                 description = trimmed,
                                 severity = severity,
-                                location = location.trim(),
+                                latitude = locationLat,
+                                longitude = locationLng,
+                                locationName = locationDisplayName,
                                 id = reportId,
                                 creatorId = existingReport?.creatorId ?: "",
                                 createdAt = existingReport?.createdAt ?: Instant.now().toEpochMilli()
@@ -239,13 +313,5 @@ fun ReportFormScreen(
                 Text(stringResource(R.string.button_submit), fontWeight = FontWeight.SemiBold)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ReportFormScreenAddPreview() {
-    X9ComposeTheme(darkTheme = true) {
-        ReportFormScreen(onSubmit = {}, onBack = {})
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -42,7 +43,7 @@ fun X9BottomBar(
     onMapClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
-    val isReportsActive = currentRoute == "reports" ||
+    val isReportsActive = (currentRoute == "reports" || currentRoute?.startsWith("reports?") == true) ||
         currentRoute == "detail/{reportId}" ||
         currentRoute == "edit/{reportId}"
 
@@ -55,8 +56,8 @@ fun X9BottomBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
-                .padding(horizontal = 8.dp),
+                .height(dimensionResource(R.dimen.bottom_bar_height))
+                .padding(horizontal = dimensionResource(R.dimen.spacing_small)),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -75,7 +76,7 @@ fun X9BottomBar(
             // FAB-style Add button
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(dimensionResource(R.dimen.button_height_primary))
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
                     .clickable(onClick = onAddClick),
@@ -91,7 +92,7 @@ fun X9BottomBar(
             BottomNavItem(
                 icon = Icons.Default.Map,
                 label = stringResource(R.string.nav_map),
-                selected = false,
+                selected = currentRoute == "map",
                 onClick = onMapClick
             )
             BottomNavItem(
@@ -116,9 +117,9 @@ private fun BottomNavItem(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(dimensionResource(R.dimen.spacing_small)))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .padding(horizontal = dimensionResource(R.dimen.item_spacing), vertical = dimensionResource(R.dimen.spacing_small))
     ) {
         Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(24.dp))
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = tint)

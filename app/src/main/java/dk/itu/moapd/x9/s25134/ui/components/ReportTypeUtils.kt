@@ -17,6 +17,15 @@ fun typeEmoji(type: String): String = when (type) {
 }
 
 @Composable
+fun severityColor(severity: Severity): Color = when (severity) {
+    Severity.CRITICAL -> colorResource(R.color.severity_critical)
+    Severity.HIGH     -> colorResource(R.color.severity_high)
+    Severity.MODERATE -> colorResource(R.color.severity_moderate)
+    Severity.LOW      -> colorResource(R.color.severity_low)
+    Severity.MINOR    -> colorResource(R.color.severity_minor)
+}
+
+@Composable
 fun severityBgColor(severity: Severity): Color = when (severity) {
     Severity.CRITICAL -> colorResource(R.color.severity_critical_bg)
     Severity.HIGH     -> colorResource(R.color.severity_high_bg)

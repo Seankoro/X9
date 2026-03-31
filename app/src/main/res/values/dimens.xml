@@ -28,4 +28,43 @@
     <dimen name="spacing_small">8dp</dimen>
     <dimen name="spacing_medium">16dp</dimen>
     <dimen name="spacing_large">24dp</dimen>
+
+    <!-- Icons and avatars -->
+    <dimen name="icon_box_size">44dp</dimen>
+
+    <!-- Content spacing (between cards/items in rows) -->
+    <dimen name="item_spacing">12dp</dimen>
+
+    <!-- Severity badge -->
+    <dimen name="badge_corner_radius">6dp</dimen>
+
+    <!-- Text fields -->
+    <dimen name="text_field_description_height">120dp</dimen>
+
+    <!-- Bottom navigation -->
+    <dimen name="bottom_bar_height">72dp</dimen>
+
+    <!-- Extra-small spacing -->
+    <dimen name="spacing_xs">4dp</dimen>
+
+    <!-- Location picker -->
+    <dimen name="location_pin_size">48dp</dimen>
+    <dimen name="location_pin_offset">24dp</dimen>
+
+    <!-- Large icon box (ReportDetailScreen emoji) -->
+    <dimen name="icon_box_size_large">56dp</dimen>
+
+    <!-- Stat card glow circle -->
+    <dimen name="stat_card_glow_size">60dp</dimen>
+    <dimen name="stat_card_glow_y_offset">10dp</dimen>
+    <dimen name="stat_card_top_padding">18dp</dimen>
+
+    <!-- Small progress indicator -->
+    <dimen name="progress_indicator_small">24dp</dimen>
+
+    <!-- Quick action icon size -->
+    <dimen name="quick_action_icon_size">22dp</dimen>
+
+    <!-- Button inline icon size -->
+    <dimen name="icon_size_inline">18dp</dimen>
 </resources>

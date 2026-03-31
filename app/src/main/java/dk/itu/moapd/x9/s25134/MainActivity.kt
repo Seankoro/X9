@@ -15,20 +15,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.compose.runtime.livedata.observeAsState
 import dk.itu.moapd.x9.s25134.ui.components.X9BottomBar
 import dk.itu.moapd.x9.s25134.ui.screens.DashboardScreen
+import dk.itu.moapd.x9.s25134.ui.screens.LocationPickerScreen
 import dk.itu.moapd.x9.s25134.ui.screens.LoginScreen
+import dk.itu.moapd.x9.s25134.ui.screens.MapScreen
 import dk.itu.moapd.x9.s25134.ui.screens.ProfileScreen
 import dk.itu.moapd.x9.s25134.ui.screens.ReportDetailScreen
 import dk.itu.moapd.x9.s25134.ui.screens.ReportFormScreen
 import dk.itu.moapd.x9.s25134.ui.screens.ReportListScreen
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 import dk.itu.moapd.x9.s25134.viewmodel.AuthViewModel
+import dk.itu.moapd.x9.s25134.viewmodel.MapViewModel
+import dk.itu.moapd.x9.s25134.viewmodel.ReportFormViewModel
 import dk.itu.moapd.x9.s25134.viewmodel.ReportListViewModel
 import kotlinx.coroutines.launch
 
@@ -40,6 +46,8 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: ReportListViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
+    private val mapViewModel: MapViewModel by viewModels()
+    private val reportFormViewModel: ReportFormViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +58,20 @@ class MainActivity : ComponentActivity() {
             val isDarkMode = isDarkModePreference ?: isSystemInDarkTheme()
             val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
 
+            // ReportFormViewModel state
+            val locationDisplayName by reportFormViewModel.locationDisplayName.collectAsStateWithLifecycle()
+            val locationLat by reportFormViewModel.latitude.collectAsStateWithLifecycle()
+            val locationLng by reportFormViewModel.longitude.collectAsStateWithLifecycle()
+            val isLoadingLocation by reportFormViewModel.isLoadingLocation.collectAsStateWithLifecycle()
+            val geocodingResults by reportFormViewModel.geocodingResults.collectAsStateWithLifecycle()
+            val isSearching by reportFormViewModel.isSearching.collectAsStateWithLifecycle()
+            val centerLabel by reportFormViewModel.centerLabel.collectAsStateWithLifecycle()
+
+            // MapViewModel state
+            val mapReports by mapViewModel.reports.observeAsState(initial = emptyList())
+            val userLocation by mapViewModel.userLocation.collectAsStateWithLifecycle()
+            val mapType by mapViewModel.mapType.collectAsStateWithLifecycle()
+
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
@@ -57,14 +79,9 @@ class MainActivity : ComponentActivity() {
             val snackbarHostState = remember { SnackbarHostState() }
             val scope = rememberCoroutineScope()
             val signInRequiredText = stringResource(R.string.msg_sign_in_required)
-            val comingSoonText = stringResource(R.string.snackbar_coming_soon)
 
-            // Always start at home — unauthenticated users can browse read-only content.
-            // Sign-in is initiated from the Profile screen when needed.
             val startDestination = "home"
 
-            // Collect auth errors from ViewModel and display as Snackbar.
-            // Using SharedFlow avoids passing Compose-scoped lambdas into the ViewModel.
             LaunchedEffect(Unit) {
                 authViewModel.authError.collect { message ->
                     snackbarHostState.showSnackbar(message)
@@ -77,7 +94,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // React to auth state: navigate home when user signs in while on login screen
             LaunchedEffect(currentUser) {
                 if (currentUser != null && currentRoute == "login") {
                     navController.navigate("home") {
@@ -94,11 +110,7 @@ class MainActivity : ComponentActivity() {
                             X9BottomBar(
                                 currentRoute = currentRoute,
                                 onHomeClick = {
-                                    navController.navigate("home") {
-                                        popUpTo("home") { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
+                                    navController.popBackStack("home", inclusive = false)
                                 },
                                 onReportsClick = {
                                     navController.navigate("reports") {
@@ -109,6 +121,7 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onAddClick = {
                                     if (currentUser != null) {
+                                        reportFormViewModel.reset()
                                         navController.navigate("add")
                                     } else {
                                         scope.launch {
@@ -117,8 +130,10 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 onMapClick = {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(comingSoonText)
+                                    navController.navigate("map") {
+                                        popUpTo("home") { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
                                 },
                                 onProfileClick = {
@@ -140,17 +155,9 @@ class MainActivity : ComponentActivity() {
                             val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
                             LoginScreen(
                                 isLoading = isLoading,
-                                onSignInWithEmail = { e, p ->
-                                    authViewModel.signInWithEmail(e, p)
-                                },
-                                onRegisterWithEmail = { name, e, p ->
-                                    authViewModel.registerWithEmail(name, e, p)
-                                },
-                                onSignInWithGoogle = { idToken ->
-                                    authViewModel.signInWithGoogle(idToken)
-                                },
-                                // Credential Manager errors (before Firebase is called) still
-                                // surface via this lambda since they occur in the composable scope
+                                onSignInWithEmail = { e, p -> authViewModel.signInWithEmail(e, p) },
+                                onRegisterWithEmail = { name, e, p -> authViewModel.registerWithEmail(name, e, p) },
+                                onSignInWithGoogle = { idToken -> authViewModel.signInWithGoogle(idToken) },
                                 onAuthError = { scope.launch { snackbarHostState.showSnackbar(it) } },
                                 onContinueAsGuest = { navController.popBackStack() },
                                 paddingValues = paddingValues
@@ -162,11 +169,17 @@ class MainActivity : ComponentActivity() {
                                 currentUser = currentUser,
                                 onNavigateToAdd = {
                                     if (currentUser != null) {
+                                        reportFormViewModel.reset()
                                         navController.navigate("add")
                                     } else {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(signInRequiredText)
-                                        }
+                                        scope.launch { snackbarHostState.showSnackbar(signInRequiredText) }
+                                    }
+                                },
+                                onNavigateToMap = {
+                                    navController.navigate("map") {
+                                        popUpTo("home") { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
                                 },
                                 onNavigateToReports = {
@@ -176,9 +189,13 @@ class MainActivity : ComponentActivity() {
                                         restoreState = true
                                     }
                                 },
-                                onNavigateToDetail = { id ->
-                                    navController.navigate("detail/$id")
+                                onNavigateToCriticalReports = {
+                                    navController.navigate("reports?criticalOnly=true")
                                 },
+                                onNavigateToMyReports = {
+                                    navController.navigate("reports?myReportsOnly=true")
+                                },
+                                onNavigateToDetail = { id -> navController.navigate("detail/$id") },
                                 onNavigateToProfile = {
                                     navController.navigate("profile") {
                                         popUpTo("home") { saveState = true }
@@ -189,13 +206,21 @@ class MainActivity : ComponentActivity() {
                                 paddingValues = paddingValues
                             )
                         }
-                        composable("reports") {
+                        composable(
+                            route = "reports?myReportsOnly={myReportsOnly}&criticalOnly={criticalOnly}",
+                            arguments = listOf(
+                                navArgument("myReportsOnly") { type = NavType.BoolType; defaultValue = false },
+                                navArgument("criticalOnly") { type = NavType.BoolType; defaultValue = false }
+                            )
+                        ) { back ->
                             ReportListScreen(
                                 reports = reports,
                                 currentUser = currentUser,
                                 onNavigateToDetail = { id -> navController.navigate("detail/$id") },
                                 onNavigateToEdit = { id -> navController.navigate("edit/$id") },
                                 onDeleteReport = { viewModel.deleteReport(it, currentUser?.uid) },
+                                initialMyReportsOnly = back.arguments?.getBoolean("myReportsOnly") ?: false,
+                                initialCriticalOnly = back.arguments?.getBoolean("criticalOnly") ?: false,
                                 paddingValues = paddingValues
                             )
                         }
@@ -204,6 +229,12 @@ class MainActivity : ComponentActivity() {
                                 reportId = null,
                                 reports = reports,
                                 currentUser = currentUser,
+                                locationDisplayName = locationDisplayName,
+                                locationLat = locationLat,
+                                locationLng = locationLng,
+                                isLoadingLocation = isLoadingLocation,
+                                onRequestLocation = { reportFormViewModel.loadCurrentLocation() },
+                                onOpenLocationPicker = { navController.navigate("location-picker") },
                                 onSubmit = { report ->
                                     viewModel.addReport(report, currentUser?.uid)
                                     navController.popBackStack()
@@ -229,12 +260,59 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("edit/{reportId}") { back ->
                             val reportId = back.arguments?.getString("reportId") ?: return@composable
+                            val existingReport = reports.find { it.id == reportId }
+                            LaunchedEffect(reportId) {
+                                reportFormViewModel.reset()
+                                reportFormViewModel.initializeForExistingReport(
+                                    existingReport?.latitude,
+                                    existingReport?.longitude
+                                )
+                            }
                             ReportFormScreen(
                                 reportId = reportId,
                                 reports = reports,
                                 currentUser = currentUser,
+                                locationDisplayName = locationDisplayName,
+                                locationLat = locationLat,
+                                locationLng = locationLng,
+                                isLoadingLocation = isLoadingLocation,
+                                onRequestLocation = { reportFormViewModel.loadCurrentLocation() },
+                                onOpenLocationPicker = { navController.navigate("location-picker") },
                                 onSubmit = { report ->
                                     viewModel.updateReport(report, currentUser?.uid)
+                                    navController.popBackStack()
+                                },
+                                onBack = { navController.popBackStack() },
+                                paddingValues = paddingValues
+                            )
+                        }
+                        composable("map") {
+                            MapScreen(
+                                reports = mapReports,
+                                userLocation = userLocation,
+                                mapType = mapType,
+                                onMapTypeChange = { mapViewModel.setMapType(it) },
+                                onLoadUserLocation = { mapViewModel.loadUserLocation() },
+                                onNavigateToDetail = { id -> navController.navigate("detail/$id") },
+                                paddingValues = paddingValues
+                            )
+                        }
+                        composable("location-picker") {
+                            LocationPickerScreen(
+                                initialLat = locationLat,
+                                initialLng = locationLng,
+                                userLocation = userLocation,
+                                centerLabel = centerLabel,
+                                geocodingResults = geocodingResults,
+                                isSearching = isSearching,
+                                onLoadUserLocation = { mapViewModel.loadUserLocation() },
+                                onReverseGeocodeCenter = { lat, lng ->
+                                    reportFormViewModel.reverseGeocodeCenter(lat, lng)
+                                },
+                                onSearch = { reportFormViewModel.searchLocation(it) },
+                                onClearResults = { reportFormViewModel.clearGeocodingResults() },
+                                onConfirm = { displayName, lat, lng ->
+                                    reportFormViewModel.confirmPickedLocation(displayName, lat, lng)
                                     navController.popBackStack()
                                 },
                                 onBack = { navController.popBackStack() },
@@ -249,8 +327,6 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToLogin = { navController.navigate("login") },
                                 onSignOut = {
                                     authViewModel.signOut()
-                                    // Navigate back to home — ProfileScreen shows the sign-in
-                                    // prompt automatically for unauthenticated users
                                     navController.navigate("home") {
                                         popUpTo(0) { inclusive = true }
                                     }

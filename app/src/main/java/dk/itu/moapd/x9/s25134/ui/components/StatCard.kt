@@ -2,6 +2,7 @@ package dk.itu.moapd.x9.s25134.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,11 +35,12 @@ fun StatCard(
     count: String,
     label: String,
     accentColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -47,8 +49,8 @@ fun StatCard(
             // Background glow circle (top-right)
             Box(
                 modifier = Modifier
-                    .size(60.dp)
-                    .offset(x = 8.dp, y = (-10).dp)
+                    .size(dimensionResource(R.dimen.stat_card_glow_size))
+                    .offset(x = dimensionResource(R.dimen.spacing_small), y = -dimensionResource(R.dimen.stat_card_glow_y_offset))
                     .clip(CircleShape)
                     .align(Alignment.TopEnd)
                     .then(
@@ -57,13 +59,13 @@ fun StatCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(60.dp)
+                        .size(dimensionResource(R.dimen.stat_card_glow_size))
                         .clip(CircleShape)
                         .background(accentColor.copy(alpha = 0.08f))
                 )
             }
             Column(
-                modifier = Modifier.padding(start = dimensionResource(R.dimen.spacing_medium), top = 18.dp, bottom = dimensionResource(R.dimen.spacing_medium), end = dimensionResource(R.dimen.spacing_medium))
+                modifier = Modifier.padding(start = dimensionResource(R.dimen.spacing_medium), top = dimensionResource(R.dimen.stat_card_top_padding), bottom = dimensionResource(R.dimen.spacing_medium), end = dimensionResource(R.dimen.spacing_medium))
             ) {
                 Text(text = emoji, fontSize = 22.sp)
                 Text(
@@ -77,7 +79,7 @@ fun StatCard(
                     text = label,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = dimensionResource(R.dimen.spacing_xs))
                 )
             }
         }

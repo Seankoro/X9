@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -23,8 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,15 +35,6 @@ import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
-@Composable
-private fun severityColor(severity: Severity): Color = when (severity) {
-    Severity.CRITICAL -> colorResource(R.color.severity_critical)
-    Severity.HIGH     -> colorResource(R.color.severity_high)
-    Severity.MODERATE -> colorResource(R.color.severity_moderate)
-    Severity.LOW      -> colorResource(R.color.severity_low)
-    Severity.MINOR    -> colorResource(R.color.severity_minor)
-}
 
 @Composable
 fun TrafficReportCard(
@@ -71,13 +59,13 @@ fun TrafficReportCard(
                 .fillMaxWidth()
                 .padding(horizontal = dimensionResource(R.dimen.card_content_padding), vertical = dimensionResource(R.dimen.card_content_padding_vertical)),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))
         ) {
             // Emoji icon in tinted box
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(dimensionResource(R.dimen.icon_box_size))
+                    .clip(RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)))
                     .background(severityBgColor(report.severity)),
                 contentAlignment = Alignment.Center
             ) {
@@ -99,26 +87,6 @@ fun TrafficReportCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    if (report.location.isNotBlank()) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = report.location,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = "·",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                     Icon(
                         imageVector = Icons.Default.Schedule,
                         contentDescription = null,
@@ -140,7 +108,7 @@ fun TrafficReportCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
+                        .clip(RoundedCornerShape(dimensionResource(R.dimen.badge_corner_radius)))
                         .background(severityBgColor(report.severity))
                         .padding(horizontal = dimensionResource(R.dimen.card_severity_chip_padding_horizontal), vertical = dimensionResource(R.dimen.card_severity_chip_padding_vertical))
                 ) {
@@ -171,8 +139,7 @@ private fun TrafficReportCardPreview() {
             report = TrafficReport(
                 type = "Accident",
                 description = "Multi-car collision blocking two lanes on E45",
-                severity = Severity.CRITICAL,
-                location = "Highway E45"
+                severity = Severity.CRITICAL
             )
         )
     }

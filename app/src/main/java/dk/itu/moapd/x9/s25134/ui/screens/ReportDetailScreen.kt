@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -67,7 +68,7 @@ fun ReportDetailScreen(
 
     if (report == null) {
         // Report was deleted — go back
-        onBack()
+        LaunchedEffect(Unit) { onBack() }
         return
     }
 
@@ -121,11 +122,11 @@ fun ReportDetailScreen(
                 .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = dimensionResource(R.dimen.spacing_medium))
         ) {
             // Emoji + type + severity badge
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))) {
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(dimensionResource(R.dimen.icon_box_size_large))
+                        .clip(RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)))
                         .background(severityBgColor),
                     contentAlignment = Alignment.Center
                 ) {
@@ -140,7 +141,7 @@ fun ReportDetailScreen(
                     )
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
+                            .clip(RoundedCornerShape(dimensionResource(R.dimen.badge_corner_radius)))
                             .background(severityBgColor)
                             .padding(horizontal = dimensionResource(R.dimen.card_severity_chip_padding_horizontal), vertical = dimensionResource(R.dimen.card_severity_chip_padding_vertical))
                     ) {
@@ -158,10 +159,19 @@ fun ReportDetailScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.spacing_medium)))
 
             // Location row
-            if (report.location.isNotBlank()) {
+            val locationText = report.locationName.ifBlank {
+                if (report.latitude != null && report.longitude != null)
+                    stringResource(R.string.format_lat_lng, report.latitude, report.longitude)
+                else null
+            }
+            if (locationText != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_small))) {
                     Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
-                    Text(text = report.location, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = locationText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
             }
@@ -180,7 +190,7 @@ fun ReportDetailScreen(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xs)))
             Text(
                 text = report.description,
                 style = MaterialTheme.typography.bodyLarge,
@@ -194,7 +204,7 @@ fun ReportDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = dimensionResource(R.dimen.spacing_medium)),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))
             ) {
                 OutlinedButton(
                     onClick = { onEdit(report.id) },
@@ -223,7 +233,7 @@ private fun ReportDetailScreenPreview() {
     X9ComposeTheme(darkTheme = true) {
         ReportDetailScreen(
             reportId = "preview",
-            reports = listOf(TrafficReport("Accident", "Multi-car collision blocking two lanes on E45", Severity.CRITICAL, location = "Highway E45", id = "preview")),
+            reports = listOf(TrafficReport("Accident", "Multi-car collision blocking two lanes on E45", Severity.CRITICAL, id = "preview")),
             currentUser = null,
             onBack = {}, onEdit = {}, onDelete = {}
         )

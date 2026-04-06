@@ -129,7 +129,7 @@
     <string name="cd_center_pin">Map center pin</string>
     <string name="cd_confirm_location">Confirm selected location</string>
     <string name="btn_view_full_report">View Full Report</string>
-    <string name="cluster_reports_title">%1$d reports in this area</string>
+    <string name="map_pager_indicator">%1$d / %2$d</string>
     <string name="distance_meters">%1$d m away</string>
     <string name="distance_km">%1$.1f km away</string>
 

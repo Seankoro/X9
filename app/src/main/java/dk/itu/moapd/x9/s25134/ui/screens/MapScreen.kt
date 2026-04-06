@@ -14,7 +14,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,11 +24,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
@@ -48,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,7 +59,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -83,7 +84,7 @@ import dk.itu.moapd.x9.s25134.ui.components.severityLabel
 import dk.itu.moapd.x9.s25134.ui.components.typeEmoji
 import kotlin.math.roundToInt
 
-private val DEFAULT_POSITION = LatLng(55.676098, 12.568337) // Copenhagen city centre
+private val DEFAULT_POSITION = LatLng(55.676098, 12.568337) // Copenhagen city center
 private const val DEFAULT_ZOOM = 12f
 
 private class ReportClusterItem(val report: TrafficReport) : ClusterItem {
@@ -108,7 +109,6 @@ private fun formatDistance(report: TrafficReport, userLocation: LatLng?, context
         context.getString(R.string.distance_km, distanceM / 1000)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     reports: List<TrafficReport>,
@@ -192,7 +192,6 @@ fun MapScreen(
     }
 
     var selectedReports by remember { mutableStateOf<List<TrafficReport>>(emptyList()) }
-    var selectedReportInCluster by remember { mutableStateOf<TrafficReport?>(null) }
     var showBottomSheet by remember { mutableStateOf(false) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -201,7 +200,6 @@ fun MapScreen(
             .filter { it.latitude != null && it.longitude != null }
             .map { ReportClusterItem(it) }
     }
-
     if (showRationale) {
         AlertDialog(
             onDismissRequest = { showRationale = false },
@@ -247,9 +245,44 @@ fun MapScreen(
                     true
                 },
                 onClusterItemClick = { item ->
-                    selectedReports = listOf(item.report)
+                    // Detect reports stacked at the exact same position (renders as one overlapping pin).
+                    // Exact Double equality is correct here: coordinates come from Firebase storage,
+                    // so same-location reports carry bit-identical values.
+                    val atSamePosition = clusterItems.filter {
+                        it.position.latitude == item.position.latitude &&
+                        it.position.longitude == item.position.longitude
+                    }
+                    selectedReports = if (atSamePosition.size > 1) {
+                        atSamePosition.map { it.report }
+                    } else {
+                        listOf(item.report)
+                    }
                     showBottomSheet = true
                     true
+                },
+                clusterContent = { cluster ->
+                    Box(
+                        modifier = Modifier
+                            .size(dimensionResource(R.dimen.map_cluster_marker_size))
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.error),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = cluster.size.toString(),
+                            color = MaterialTheme.colorScheme.onError,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                clusterItemContent = { _ ->
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(dimensionResource(R.dimen.map_single_marker_size))
+                    )
                 }
             )
         }
@@ -305,36 +338,26 @@ fun MapScreen(
     // ModalBottomSheet is intentionally outside the Box — it renders in its own window layer
     if (showBottomSheet && selectedReports.isNotEmpty()) {
         ModalBottomSheet(
-            onDismissRequest = {
-                showBottomSheet = false
-                selectedReportInCluster = null
-            },
+            onDismissRequest = { showBottomSheet = false },
             sheetState = bottomSheetState
         ) {
-            val drillTarget = selectedReportInCluster
-            when {
-                selectedReports.size == 1 -> SingleReportSheet(
+            if (selectedReports.size == 1) {
+                SingleReportSheet(
                     report = selectedReports.first(),
                     userLocation = userLocation,
-                    onBack = null,
                     onViewDetail = {
                         showBottomSheet = false
                         onNavigateToDetail(selectedReports.first().id)
                     }
                 )
-                drillTarget != null -> SingleReportSheet(
-                    report = drillTarget,
-                    userLocation = userLocation,
-                    onBack = { selectedReportInCluster = null },
-                    onViewDetail = {
-                        showBottomSheet = false
-                        selectedReportInCluster = null
-                        onNavigateToDetail(drillTarget.id)
-                    }
-                )
-                else -> ClusterSheet(
+            } else {
+                SwipeableClusterSheet(
                     reports = selectedReports,
-                    onReportClick = { report -> selectedReportInCluster = report }
+                    userLocation = userLocation,
+                    onViewDetail = { id ->
+                        showBottomSheet = false
+                        onNavigateToDetail(id)
+                    }
                 )
             }
         }
@@ -345,7 +368,6 @@ fun MapScreen(
 private fun SingleReportSheet(
     report: TrafficReport,
     userLocation: LatLng?,
-    onBack: (() -> Unit)?,
     onViewDetail: () -> Unit
 ) {
     val context = LocalContext.current
@@ -356,25 +378,6 @@ private fun SingleReportSheet(
             .padding(bottom = dimensionResource(R.dimen.spacing_large)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))
     ) {
-        if (onBack != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_xs))
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.cd_back)
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.nav_reports),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
         // Header row: emoji + type name + severity badge
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -418,7 +421,7 @@ private fun SingleReportSheet(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(dimensionResource(R.dimen.icon_size_location_pin))
                 )
                 Text(
                     text = distanceText,
@@ -439,58 +442,145 @@ private fun SingleReportSheet(
 }
 
 @Composable
-private fun ClusterSheet(
+private fun SwipeableClusterSheet(
     reports: List<TrafficReport>,
-    onReportClick: (TrafficReport) -> Unit
+    userLocation: LatLng?,
+    onViewDetail: (String) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = dimensionResource(R.dimen.spacing_large))
-    ) {
+    val context = LocalContext.current
+    val pagerState = rememberPagerState(pageCount = { reports.size })
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+
+        // "X / Y" page counter
         Text(
-            text = stringResource(R.string.cluster_reports_title, reports.size),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(
-                horizontal = dimensionResource(R.dimen.screen_horizontal_padding),
-                vertical = dimensionResource(R.dimen.spacing_small)
-            )
+            text = stringResource(
+                R.string.map_pager_indicator,
+                pagerState.currentPage + 1,
+                reports.size
+            ),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    top = dimensionResource(R.dimen.spacing_small),
+                    bottom = dimensionResource(R.dimen.spacing_xs)
+                )
         )
-        HorizontalDivider()
-        LazyColumn {
-            items(reports) { report ->
+
+        // Dot indicators
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = dimensionResource(R.dimen.spacing_small)),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            reports.indices.forEach { index ->
+                key(index) {
+                    val isSelected = index == pagerState.currentPage
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 2.dp)
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .then(
+                                if (isSelected) {
+                                    Modifier.background(MaterialTheme.colorScheme.primary)
+                                } else {
+                                    Modifier.border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.outline,
+                                        shape = CircleShape
+                                    )
+                                }
+                            )
+                    )
+                }
+            }
+        }
+
+        // Swipeable report cards
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth()
+        ) { page ->
+            val report = reports[page]
+            val distanceText = formatDistance(report, userLocation, context)
+                ?: report.locationName.ifBlank { null }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding))
+                    .padding(bottom = dimensionResource(R.dimen.spacing_large)),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))
+            ) {
+                // Header: emoji + type name + severity badge
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onReportClick(report) }
-                        .padding(
-                            horizontal = dimensionResource(R.dimen.screen_horizontal_padding),
-                            vertical = dimensionResource(R.dimen.item_spacing)
-                        ),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = typeEmoji(report.type), style = MaterialTheme.typography.titleLarge)
-                    Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_small))
+                    ) {
                         Text(
-                            text = report.type,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
+                            text = typeEmoji(report.type),
+                            style = MaterialTheme.typography.headlineMedium
                         )
                         Text(
-                            text = report.description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            text = report.type,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     SeverityBadge(severity = report.severity)
                 }
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding))
+
+                HorizontalDivider()
+
+                // Description
+                Text(
+                    text = report.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+
+                // Distance / location name
+                if (distanceText != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_xs))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(dimensionResource(R.dimen.icon_size_location_pin))
+                        )
+                        Text(
+                            text = distanceText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Navigate to full detail
+                Button(
+                    onClick = { onViewDetail(report.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius))
+                ) {
+                    Text(
+                        text = stringResource(R.string.btn_view_full_report),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
     }

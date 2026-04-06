@@ -67,4 +67,9 @@
 
     <!-- Button inline icon size -->
     <dimen name="icon_size_inline">18dp</dimen>
+
+    <!-- Map markers -->
+    <dimen name="map_cluster_marker_size">40dp</dimen>
+    <dimen name="map_single_marker_size">32dp</dimen>
+    <dimen name="icon_size_location_pin">16dp</dimen>
 </resources>

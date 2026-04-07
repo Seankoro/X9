@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Embedded map zoom level in ReportFormScreen (passed as Float to Maps Compose camera API) -->
+    <integer name="map_embed_zoom">16</integer>
+</resources>

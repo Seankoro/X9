@@ -47,10 +47,6 @@
     <!-- Extra-small spacing -->
     <dimen name="spacing_xs">4dp</dimen>
 
-    <!-- Location picker -->
-    <dimen name="location_pin_size">48dp</dimen>
-    <dimen name="location_pin_offset">24dp</dimen>
-
     <!-- Large icon box (ReportDetailScreen emoji) -->
     <dimen name="icon_box_size_large">56dp</dimen>
 
@@ -72,4 +68,7 @@
     <dimen name="map_cluster_marker_size">40dp</dimen>
     <dimen name="map_single_marker_size">32dp</dimen>
     <dimen name="icon_size_location_pin">16dp</dimen>
+
+    <!-- Embedded map in ReportFormScreen -->
+    <dimen name="map_embed_height">220dp</dimen>
 </resources>

@@ -31,6 +31,9 @@
     <string name="title_report_detail">Report Detail</string>
     <string name="label_location">Location</string>
     <string name="format_lat_lng">%1$.5f, %2$.5f</string>
+    <string name="msg_location_permission_rationale">Location permission is needed to show your position on the map and pre-fill report locations.</string>
+    <string name="button_grant_permission">Grant Permission</string>
+    <string name="error_location_unavailable">Your location could not be determined. Move to an area with better GPS signal and reopen the form.</string>
 
     <!-- Login / Authentication -->
     <string name="btn_sign_in_google">Sign in with Google</string>
@@ -105,29 +108,11 @@
     <string name="quick_action_calendar">Calendar</string>
     <string name="btn_view_all">View all →</string>
 
-    <string name="label_search_location">Search Location</string>
-    <string name="hint_search_location">Enter a place name…</string>
-    <string name="button_search">Search</string>
-    <string name="msg_fetching_location">Fetching location…</string>
-    <string name="msg_location_unavailable">Location unavailable</string>
-    <string name="msg_grant_location_permission">Grant location permission to auto-fill</string>
-    <string name="msg_no_location_results">No results found</string>
-    <string name="msg_location_permission_rationale">Location permission is needed to show your position on the map and pre-fill report locations.</string>
-    <string name="button_grant_permission">Grant Permission</string>
     <string name="map_type_normal">Normal</string>
     <string name="map_type_satellite">Satellite</string>
     <string name="map_type_hybrid">Hybrid</string>
     <string name="map_type_terrain">Terrain</string>
     <string name="cd_layers_button">Change map type</string>
-    <string name="cd_search_location">Search location</string>
-    <string name="cd_my_location_button">My location</string>
-    <string name="title_set_location">Set Location</string>
-    <string name="hint_tap_to_set_location">Tap to set location…</string>
-    <string name="btn_confirm_location">Confirm Location</string>
-    <string name="btn_use_my_location">Use My Location</string>
-    <string name="msg_determining_location">Determining location…</string>
-    <string name="cd_center_pin">Map center pin</string>
-    <string name="cd_confirm_location">Confirm selected location</string>
     <string name="btn_view_full_report">View Full Report</string>
     <string name="map_pager_indicator">%1$d / %2$d</string>
     <string name="distance_meters">%1$d m away</string>

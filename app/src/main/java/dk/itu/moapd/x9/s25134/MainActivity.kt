@@ -24,7 +24,6 @@ import androidx.navigation.navArgument
 import androidx.compose.runtime.livedata.observeAsState
 import dk.itu.moapd.x9.s25134.ui.components.X9BottomBar
 import dk.itu.moapd.x9.s25134.ui.screens.DashboardScreen
-import dk.itu.moapd.x9.s25134.ui.screens.LocationPickerScreen
 import dk.itu.moapd.x9.s25134.ui.screens.LoginScreen
 import dk.itu.moapd.x9.s25134.ui.screens.MapScreen
 import dk.itu.moapd.x9.s25134.ui.screens.ProfileScreen
@@ -63,10 +62,6 @@ class MainActivity : ComponentActivity() {
             val locationLat by reportFormViewModel.latitude.collectAsStateWithLifecycle()
             val locationLng by reportFormViewModel.longitude.collectAsStateWithLifecycle()
             val isLoadingLocation by reportFormViewModel.isLoadingLocation.collectAsStateWithLifecycle()
-            val geocodingResults by reportFormViewModel.geocodingResults.collectAsStateWithLifecycle()
-            val isSearching by reportFormViewModel.isSearching.collectAsStateWithLifecycle()
-            val centerLabel by reportFormViewModel.centerLabel.collectAsStateWithLifecycle()
-
             // MapViewModel state
             val mapReports by mapViewModel.reports.observeAsState(initial = emptyList())
             val userLocation by mapViewModel.userLocation.collectAsStateWithLifecycle()
@@ -234,7 +229,6 @@ class MainActivity : ComponentActivity() {
                                 locationLng = locationLng,
                                 isLoadingLocation = isLoadingLocation,
                                 onRequestLocation = { reportFormViewModel.loadCurrentLocation() },
-                                onOpenLocationPicker = { navController.navigate("location-picker") },
                                 onSubmit = { report ->
                                     viewModel.addReport(report, currentUser?.uid)
                                     navController.popBackStack()
@@ -260,13 +254,8 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("edit/{reportId}") { back ->
                             val reportId = back.arguments?.getString("reportId") ?: return@composable
-                            val existingReport = reports.find { it.id == reportId }
                             LaunchedEffect(reportId) {
                                 reportFormViewModel.reset()
-                                reportFormViewModel.initializeForExistingReport(
-                                    existingReport?.latitude,
-                                    existingReport?.longitude
-                                )
                             }
                             ReportFormScreen(
                                 reportId = reportId,
@@ -277,7 +266,6 @@ class MainActivity : ComponentActivity() {
                                 locationLng = locationLng,
                                 isLoadingLocation = isLoadingLocation,
                                 onRequestLocation = { reportFormViewModel.loadCurrentLocation() },
-                                onOpenLocationPicker = { navController.navigate("location-picker") },
                                 onSubmit = { report ->
                                     viewModel.updateReport(report, currentUser?.uid)
                                     navController.popBackStack()
@@ -294,28 +282,6 @@ class MainActivity : ComponentActivity() {
                                 onMapTypeChange = { mapViewModel.setMapType(it) },
                                 onLoadUserLocation = { mapViewModel.loadUserLocation() },
                                 onNavigateToDetail = { id -> navController.navigate("detail/$id") },
-                                paddingValues = paddingValues
-                            )
-                        }
-                        composable("location-picker") {
-                            LocationPickerScreen(
-                                initialLat = locationLat,
-                                initialLng = locationLng,
-                                userLocation = userLocation,
-                                centerLabel = centerLabel,
-                                geocodingResults = geocodingResults,
-                                isSearching = isSearching,
-                                onLoadUserLocation = { mapViewModel.loadUserLocation() },
-                                onReverseGeocodeCenter = { lat, lng ->
-                                    reportFormViewModel.reverseGeocodeCenter(lat, lng)
-                                },
-                                onSearch = { reportFormViewModel.searchLocation(it) },
-                                onClearResults = { reportFormViewModel.clearGeocodingResults() },
-                                onConfirm = { displayName, lat, lng ->
-                                    reportFormViewModel.confirmPickedLocation(displayName, lat, lng)
-                                    navController.popBackStack()
-                                },
-                                onBack = { navController.popBackStack() },
                                 paddingValues = paddingValues
                             )
                         }

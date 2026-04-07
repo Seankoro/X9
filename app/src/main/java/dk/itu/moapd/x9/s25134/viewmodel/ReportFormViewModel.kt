@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.repository.GeocodingRepository
-import dk.itu.moapd.x9.s25134.repository.GeocodingResult
 import dk.itu.moapd.x9.s25134.repository.LocationRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,17 +37,7 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
     private val _isLoadingLocation = MutableStateFlow(false)
     val isLoadingLocation: StateFlow<Boolean> = _isLoadingLocation.asStateFlow()
 
-    private val _geocodingResults = MutableStateFlow<List<GeocodingResult>>(emptyList())
-    val geocodingResults: StateFlow<List<GeocodingResult>> = _geocodingResults.asStateFlow()
-
-    private val _isSearching = MutableStateFlow(false)
-    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
-
-    /** Live reverse-geocoded label for the map center pin in LocationPickerScreen. */
-    private val _centerLabel = MutableStateFlow("")
-    val centerLabel: StateFlow<String> = _centerLabel.asStateFlow()
-
-    /** Called when opening the form for a new report — fetches GPS location and reverse geocodes it. */
+    /** Fetches GPS location and reverse geocodes it for display. */
     fun loadCurrentLocation() {
         viewModelScope.launch {
             _isLoadingLocation.value = true
@@ -65,63 +54,11 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    /** Called when opening the form in edit mode — reverse geocodes the existing coordinates. */
-    fun initializeForExistingReport(lat: Double?, lng: Double?) {
-        if (lat == null || lng == null) return
-        _latitude.value = lat
-        _longitude.value = lng
-        viewModelScope.launch {
-            val address = geocodingRepository.reverseGeocode(lat, lng)
-            _locationDisplayName.value = address ?: formatCoords(lat, lng)
-        }
-    }
-
-    /** Searches for locations matching [query] using forward geocoding. */
-    fun searchLocation(query: String) {
-        if (query.isBlank()) return
-        viewModelScope.launch {
-            _isSearching.value = true
-            _geocodingResults.value = geocodingRepository.forwardGeocode(query)
-            _isSearching.value = false
-        }
-    }
-
-    /** Applies a user-selected geocoding result as the report's location. */
-    fun selectLocation(result: GeocodingResult) {
-        _latitude.value = result.lat.toDoubleOrNull()
-        _longitude.value = result.lon.toDoubleOrNull()
-        _locationDisplayName.value = result.displayName
-        _geocodingResults.value = emptyList()
-    }
-
-    fun clearGeocodingResults() {
-        _geocodingResults.value = emptyList()
-    }
-
-    /** Saves the location confirmed in LocationPickerScreen to the report. */
-    fun confirmPickedLocation(displayName: String, lat: Double, lng: Double) {
-        _locationDisplayName.value = displayName
-        _latitude.value = lat
-        _longitude.value = lng
-        _centerLabel.value = ""
-    }
-
-    /** Reverse geocodes [lat]/[lng] and updates [centerLabel] for the picker's center pin. */
-    fun reverseGeocodeCenter(lat: Double, lng: Double) {
-        viewModelScope.launch {
-            _centerLabel.value = geocodingRepository.reverseGeocode(lat, lng)
-                ?: formatCoords(lat, lng)
-        }
-    }
-
     /** Resets all location state — call before opening the form for a new report. */
     fun reset() {
         _locationDisplayName.value = ""
         _latitude.value = null
         _longitude.value = null
-        _geocodingResults.value = emptyList()
         _isLoadingLocation.value = false
-        _isSearching.value = false
-        _centerLabel.value = ""
     }
 }

@@ -3,9 +3,6 @@ package dk.itu.moapd.x9.s25134.ui.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,8 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -27,7 +22,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
@@ -43,15 +37,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.content.ContextCompat
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
@@ -72,7 +76,6 @@ fun ReportFormScreen(
     locationLng: Double?,
     isLoadingLocation: Boolean,
     onRequestLocation: () -> Unit,
-    onOpenLocationPicker: () -> Unit,
     onSubmit: (TrafficReport) -> Unit,
     onBack: () -> Unit,
     paddingValues: PaddingValues = PaddingValues()
@@ -95,16 +98,7 @@ fun ReportFormScreen(
     val showDiscardDialog = rememberSaveable { mutableStateOf(false) }
     val errorEmptyDescription = stringResource(R.string.error_empty_description)
 
-    // Permission launcher — requests location and triggers auto-fill if granted
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val granted = permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) ||
-                      permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)
-        if (granted) onRequestLocation()
-    }
-
-    // On form open: request location for new reports; reverse geocode for edits
+    // On form open: request location for new reports
     LaunchedEffect(reportId) {
         if (existingReport == null) {
             val hasPermission = ContextCompat.checkSelfPermission(
@@ -154,6 +148,18 @@ fun ReportFormScreen(
                 .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding))
                 .padding(top = dimensionResource(R.dimen.spacing_medium), bottom = dimensionResource(R.dimen.spacing_large))
         ) {
+            val mapHeight = dimensionResource(R.dimen.map_embed_height)
+            val mapZoom = integerResource(R.integer.map_embed_zoom).toFloat()
+            val cameraPositionState = rememberCameraPositionState()
+            LaunchedEffect(locationLat, locationLng) {
+                if (locationLat != null && locationLng != null) {
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                        LatLng(locationLat, locationLng),
+                        mapZoom
+                    )
+                }
+            }
+
             // Type dropdown
             Text(
                 text = stringResource(R.string.label_type),
@@ -178,40 +184,6 @@ fun ReportFormScreen(
                         DropdownMenuItem(text = { Text(type) }, onClick = { selectedType = type; expanded = false })
                     }
                 }
-            }
-
-            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
-
-            // Location field — tappable; opens LocationPickerScreen
-            val locationValue = when {
-                isLoadingLocation -> stringResource(R.string.msg_fetching_location)
-                locationDisplayName.isNotBlank() -> locationDisplayName
-                else -> ""
-            }
-            Box(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = locationValue,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.label_location)) },
-                    placeholder = { Text(stringResource(R.string.hint_tap_to_set_location)) },
-                    leadingIcon = {
-                        if (isLoadingLocation) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                        } else {
-                            Icon(Icons.Default.LocationOn, contentDescription = null)
-                        }
-                    },
-                    shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius)),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                // Transparent overlay makes the entire field tappable
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .clickable(enabled = !isLoadingLocation) { onOpenLocationPicker() }
-                )
             }
 
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
@@ -268,9 +240,84 @@ fun ReportFormScreen(
                 fontWeight = FontWeight.SemiBold
             )
 
+            // Location section — new reports only
+            if (!isEditMode) {
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
+
+                Text(
+                    text = stringResource(R.string.label_location),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xs)))
+
+                when {
+                    isLoadingLocation -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(mapHeight),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(dimensionResource(R.dimen.progress_indicator_small))
+                            )
+                        }
+                    }
+                    locationLat != null && locationLng != null -> {
+                        GoogleMap(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(mapHeight),
+                            cameraPositionState = cameraPositionState,
+                            properties = MapProperties(isMyLocationEnabled = false),
+                            uiSettings = MapUiSettings(
+                                scrollGesturesEnabled = false,
+                                zoomGesturesEnabled = false,
+                                rotationGesturesEnabled = false,
+                                tiltGesturesEnabled = false,
+                                myLocationButtonEnabled = false,
+                                zoomControlsEnabled = false,
+                                mapToolbarEnabled = false
+                            )
+                        ) {
+                            val markerState = remember(locationLat, locationLng) {
+                                MarkerState(position = LatLng(locationLat, locationLng))
+                            }
+                            Marker(state = markerState)
+                        }
+                        if (locationDisplayName.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xs)))
+                            Text(
+                                text = locationDisplayName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    else -> {
+                        // No GPS fix obtained
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(mapHeight),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.error_location_unavailable),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_large)))
 
             // Submit button
+            val submitEnabled = isEditMode || (locationLat != null && locationLng != null)
             Button(
                 onClick = {
                     val trimmed = description.trim()
@@ -303,6 +350,7 @@ fun ReportFormScreen(
                         )
                     }
                 },
+                enabled = submitEnabled,
                 modifier = Modifier.fillMaxWidth().height(dimensionResource(R.dimen.button_height_primary)),
                 shape = RoundedCornerShape(dimensionResource(R.dimen.button_corner_radius)),
                 colors = ButtonDefaults.buttonColors(

@@ -86,7 +86,7 @@ fun X9BottomBar(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.cd_add_report),
                     tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(dimensionResource(R.dimen.icon_size_fab))
                 )
             }
             BottomNavItem(
@@ -121,7 +121,7 @@ private fun BottomNavItem(
             .clickable(onClick = onClick)
             .padding(horizontal = dimensionResource(R.dimen.item_spacing), vertical = dimensionResource(R.dimen.spacing_small))
     ) {
-        Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(24.dp))
+        Icon(imageVector = icon, contentDescription = label, tint = tint, modifier = Modifier.size(dimensionResource(R.dimen.icon_size_nav)))
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = tint)
     }
 }

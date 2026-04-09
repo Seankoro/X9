@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,17 +33,19 @@ import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun TrafficReportCard(
     report: TrafficReport,
     onClick: () -> Unit = {}
 ) {
-    val timeFormatted = SimpleDateFormat("HH:mm", Locale.getDefault())
-        .format(Date(report.createdAt))
+    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault()) }
+    val timeFormatted = remember(report.createdAt) {
+        timeFormatter.format(Instant.ofEpochMilli(report.createdAt))
+    }
 
     Card(
         modifier = Modifier
@@ -83,7 +86,7 @@ fun TrafficReportCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 Row(
-                    modifier = Modifier.padding(top = 4.dp),
+                    modifier = Modifier.padding(top = dimensionResource(R.dimen.spacing_xs)),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
@@ -91,7 +94,7 @@ fun TrafficReportCard(
                         imageVector = Icons.Default.Schedule,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(dimensionResource(R.dimen.icon_size_small))
                     )
                     Text(
                         text = timeFormatted,
@@ -106,20 +109,7 @@ fun TrafficReportCard(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(dimensionResource(R.dimen.badge_corner_radius)))
-                        .background(severityBgColor(report.severity))
-                        .padding(horizontal = dimensionResource(R.dimen.card_severity_chip_padding_horizontal), vertical = dimensionResource(R.dimen.card_severity_chip_padding_vertical))
-                ) {
-                    Text(
-                        text = severityLabel(report.severity),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = severityColor(report.severity),
-                        letterSpacing = 0.5.sp
-                    )
-                }
+                SeverityBadge(severity = report.severity)
                 Box(
                     modifier = Modifier
                         .size(8.dp)

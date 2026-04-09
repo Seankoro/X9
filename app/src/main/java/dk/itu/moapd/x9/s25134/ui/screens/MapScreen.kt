@@ -51,12 +51,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,16 +78,13 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.clustering.Clustering
 import com.google.maps.android.compose.rememberCameraPositionState
 import dk.itu.moapd.x9.s25134.R
-import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
+import dk.itu.moapd.x9.s25134.ui.components.SeverityBadge
 import dk.itu.moapd.x9.s25134.ui.components.severityBgColor
-import dk.itu.moapd.x9.s25134.ui.components.severityColor
-import dk.itu.moapd.x9.s25134.ui.components.severityLabel
 import dk.itu.moapd.x9.s25134.ui.components.typeEmoji
 import kotlin.math.roundToInt
 
 private val DEFAULT_POSITION = LatLng(55.676098, 12.568337) // Copenhagen city center
-private const val DEFAULT_ZOOM = 12f
 
 private class ReportClusterItem(val report: TrafficReport) : ClusterItem {
     override fun getPosition(): LatLng = LatLng(report.latitude ?: 0.0, report.longitude ?: 0.0)
@@ -120,6 +119,8 @@ fun MapScreen(
     paddingValues: PaddingValues = PaddingValues()
 ) {
     val context = LocalContext.current
+    val defaultZoom = integerResource(R.integer.map_default_zoom).toFloat()
+
     var hasPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -149,8 +150,8 @@ fun MapScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    var showRationale by remember { mutableStateOf(false) }
-    var showLayerPicker by remember { mutableStateOf(false) }
+    var showRationale by rememberSaveable { mutableStateOf(false) }
+    var showLayerPicker by rememberSaveable { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -180,12 +181,12 @@ fun MapScreen(
     LaunchedEffect(userLocation) {
         if (userLocation != null) {
             cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(userLocation, DEFAULT_ZOOM)
+                CameraUpdateFactory.newLatLngZoom(userLocation, defaultZoom)
             )
             hasCameraInitialized = true
         } else if (!hasCameraInitialized) {
             cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(DEFAULT_POSITION, DEFAULT_ZOOM)
+                CameraUpdateFactory.newLatLngZoom(DEFAULT_POSITION, defaultZoom)
             )
             hasCameraInitialized = true
         }
@@ -482,8 +483,8 @@ private fun SwipeableClusterSheet(
                     val isSelected = index == pagerState.currentPage
                     Box(
                         modifier = Modifier
-                            .padding(horizontal = 2.dp)
-                            .size(6.dp)
+                            .padding(horizontal = dimensionResource(R.dimen.pager_dot_spacing))
+                            .size(dimensionResource(R.dimen.pager_dot_size))
                             .clip(CircleShape)
                             .then(
                                 if (isSelected) {
@@ -583,26 +584,5 @@ private fun SwipeableClusterSheet(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun SeverityBadge(severity: Severity) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(dimensionResource(R.dimen.badge_corner_radius)))
-            .background(severityBgColor(severity))
-            .padding(
-                horizontal = dimensionResource(R.dimen.card_severity_chip_padding_horizontal),
-                vertical = dimensionResource(R.dimen.card_severity_chip_padding_vertical)
-            )
-    ) {
-        Text(
-            text = severityLabel(severity),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = severityColor(severity),
-            letterSpacing = 0.5.sp
-        )
     }
 }

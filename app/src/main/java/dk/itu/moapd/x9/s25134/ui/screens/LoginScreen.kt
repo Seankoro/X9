@@ -1,5 +1,6 @@
 package dk.itu.moapd.x9.s25134.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -99,15 +100,15 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp)
+                .padding(horizontal = dimensionResource(R.dimen.login_horizontal_padding))
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.login_spacing_section)))
 
             // Branding
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(dimensionResource(R.dimen.login_logo_size))
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
@@ -134,7 +135,7 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xs)))
 
             Text(
                 text = stringResource(R.string.subtitle_text),
@@ -142,7 +143,7 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.login_spacing_section)))
 
             // Mode toggle pills
             Row(
@@ -160,7 +161,7 @@ fun LoginScreen(
                         },
                         modifier = Modifier
                             .weight(1f)
-                            .height(44.dp),
+                            .height(dimensionResource(R.dimen.button_height_toggle)),
                         shape = RoundedCornerShape(22.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isSelected) MaterialTheme.colorScheme.primary
@@ -190,7 +191,7 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius))
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.item_spacing)))
             }
 
             OutlinedTextField(
@@ -203,7 +204,7 @@ fun LoginScreen(
                 shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius))
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.item_spacing)))
 
             OutlinedTextField(
                 value = password,
@@ -217,7 +218,7 @@ fun LoginScreen(
             )
 
             if (mode == AuthMode.REGISTER) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.item_spacing)))
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it; fieldError = null },
@@ -290,7 +291,7 @@ fun LoginScreen(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.item_spacing))
             ) {
                 HorizontalDivider(modifier = Modifier.weight(1f))
                 Text(
@@ -307,25 +308,14 @@ fun LoginScreen(
             OutlinedButton(
                 onClick = {
                     scope.launch {
-                        val credentialManager = CredentialManager.create(context)
-                        val googleIdOption = GetGoogleIdOption.Builder()
-                            .setServerClientId(context.getString(R.string.default_web_client_id))
-                            .setFilterByAuthorizedAccounts(false)
-                            .build()
-                        val request = GetCredentialRequest.Builder()
-                            .addCredentialOption(googleIdOption)
-                            .build()
-                        try {
-                            val result = credentialManager.getCredential(
-                                context = context,
-                                request = request
-                            )
-                            val googleIdTokenCredential =
-                                GoogleIdTokenCredential.createFrom(result.credential.data)
-                            onSignInWithGoogle(googleIdTokenCredential.idToken)
-                        } catch (e: GetCredentialException) {
-                            onAuthError(e.localizedMessage ?: googleSignInFailedError)
-                        }
+                        val result = performGoogleSignIn(
+                            context = context,
+                            serverClientId = context.getString(R.string.default_web_client_id)
+                        )
+                        result.fold(
+                            onSuccess = { idToken -> onSignInWithGoogle(idToken) },
+                            onFailure = { e -> onAuthError(e.localizedMessage ?: googleSignInFailedError) }
+                        )
                     }
                 },
                 enabled = !isLoading,
@@ -354,8 +344,31 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_large)))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.login_spacing_section)))
         }
+    }
+}
+
+// Executes the Credential Manager Google Sign-In flow and returns a Result wrapping the ID token.
+// Must be called from a coroutine with an Activity-derived Context (required by CredentialManager).
+private suspend fun performGoogleSignIn(
+    context: Context,
+    serverClientId: String
+): Result<String> {
+    val credentialManager = CredentialManager.create(context)
+    val googleIdOption = GetGoogleIdOption.Builder()
+        .setServerClientId(serverClientId)
+        .setFilterByAuthorizedAccounts(false)
+        .build()
+    val request = GetCredentialRequest.Builder()
+        .addCredentialOption(googleIdOption)
+        .build()
+    return try {
+        val result = credentialManager.getCredential(context = context, request = request)
+        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
+        Result.success(googleIdTokenCredential.idToken)
+    } catch (e: GetCredentialException) {
+        Result.failure(e)
     }
 }
 

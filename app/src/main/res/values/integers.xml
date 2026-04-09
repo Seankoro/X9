@@ -2,4 +2,6 @@
 <resources>
     <!-- Embedded map zoom level in ReportFormScreen (passed as Float to Maps Compose camera API) -->
     <integer name="map_embed_zoom">16</integer>
+    <!-- Full-screen map default zoom level in MapScreen -->
+    <integer name="map_default_zoom">12</integer>
 </resources>

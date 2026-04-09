@@ -1,9 +1,20 @@
 package dk.itu.moapd.x9.s25134.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 
@@ -41,4 +52,27 @@ fun severityLabel(severity: Severity): String = when (severity) {
     Severity.MODERATE -> stringResource(R.string.severity_label_moderate)
     Severity.LOW      -> stringResource(R.string.severity_label_low)
     Severity.MINOR    -> stringResource(R.string.severity_label_minor)
+}
+
+// Shared severity badge used across TrafficReportCard, ReportDetailScreen, and MapScreen
+// to keep badge styling consistent and eliminate duplicated layout code.
+@Composable
+fun SeverityBadge(severity: Severity, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(dimensionResource(R.dimen.badge_corner_radius)))
+            .background(severityBgColor(severity))
+            .padding(
+                horizontal = dimensionResource(R.dimen.card_severity_chip_padding_horizontal),
+                vertical = dimensionResource(R.dimen.card_severity_chip_padding_vertical)
+            )
+    ) {
+        Text(
+            text = severityLabel(severity),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = severityColor(severity),
+            letterSpacing = 0.5.sp
+        )
+    }
 }

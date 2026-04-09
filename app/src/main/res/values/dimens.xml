@@ -71,4 +71,19 @@
 
     <!-- Embedded map in ReportFormScreen -->
     <dimen name="map_embed_height">220dp</dimen>
+
+    <!-- Login screen -->
+    <dimen name="login_horizontal_padding">32dp</dimen>
+    <dimen name="login_logo_size">80dp</dimen>
+    <dimen name="login_spacing_section">32dp</dimen>
+    <dimen name="button_height_toggle">44dp</dimen>
+
+    <!-- Icon sizes -->
+    <dimen name="icon_size_small">14dp</dimen>
+    <dimen name="icon_size_nav">24dp</dimen>
+    <dimen name="icon_size_fab">28dp</dimen>
+
+    <!-- Map cluster pager dots -->
+    <dimen name="pager_dot_size">6dp</dimen>
+    <dimen name="pager_dot_spacing">2dp</dimen>
 </resources>

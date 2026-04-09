@@ -1,9 +1,12 @@
 package dk.itu.moapd.x9.s25134.viewmodel
 
+import android.app.Application
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.annotation.StringRes
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuthException
+import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.User
 import dk.itu.moapd.x9.s25134.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -14,7 +17,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {
         private const val TAG = "AuthViewModel"
@@ -46,10 +49,10 @@ class AuthViewModel : ViewModel() {
                 Log.d(TAG, "signInWithEmail success")
             } catch (e: FirebaseAuthException) {
                 Log.e(TAG, "signInWithEmail error: ${e.errorCode}", e)
-                _authError.tryEmit(e.localizedMessage ?: "Authentication failed")
+                _authError.tryEmit(e.localizedMessage ?: getString(R.string.error_auth_generic))
             } catch (e: Exception) {
                 Log.e(TAG, "signInWithEmail unexpected error", e)
-                _authError.tryEmit(e.localizedMessage ?: "Authentication failed")
+                _authError.tryEmit(e.localizedMessage ?: getString(R.string.error_auth_generic))
             } finally {
                 _isLoading.value = false
             }
@@ -64,10 +67,10 @@ class AuthViewModel : ViewModel() {
                 Log.d(TAG, "registerWithEmail success")
             } catch (e: FirebaseAuthException) {
                 Log.e(TAG, "registerWithEmail error: ${e.errorCode}", e)
-                _authError.tryEmit(e.localizedMessage ?: "Registration failed")
+                _authError.tryEmit(e.localizedMessage ?: getString(R.string.error_auth_generic))
             } catch (e: Exception) {
                 Log.e(TAG, "registerWithEmail unexpected error", e)
-                _authError.tryEmit(e.localizedMessage ?: "Registration failed")
+                _authError.tryEmit(e.localizedMessage ?: getString(R.string.error_auth_generic))
             } finally {
                 _isLoading.value = false
             }
@@ -82,10 +85,10 @@ class AuthViewModel : ViewModel() {
                 Log.d(TAG, "signInWithGoogle success")
             } catch (e: FirebaseAuthException) {
                 Log.e(TAG, "signInWithGoogle error: ${e.errorCode}", e)
-                _authError.tryEmit(e.localizedMessage ?: "Google sign-in failed")
+                _authError.tryEmit(e.localizedMessage ?: getString(R.string.error_google_sign_in_failed))
             } catch (e: Exception) {
                 Log.e(TAG, "signInWithGoogle unexpected error", e)
-                _authError.tryEmit(e.localizedMessage ?: "Google sign-in failed")
+                _authError.tryEmit(e.localizedMessage ?: getString(R.string.error_google_sign_in_failed))
             } finally {
                 _isLoading.value = false
             }
@@ -95,4 +98,6 @@ class AuthViewModel : ViewModel() {
     fun signOut() {
         repository.signOut()
     }
+
+    private fun getString(@StringRes id: Int): String = getApplication<Application>().getString(id)
 }

@@ -8,8 +8,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import dk.itu.moapd.x9.s25134.R
+import dk.itu.moapd.x9.s25134.X9Application
 import dk.itu.moapd.x9.s25134.model.TrafficReport
-import dk.itu.moapd.x9.s25134.repository.ReportRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -42,7 +42,7 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
         prefs.edit { putBoolean(KEY_DARK_MODE, enabled) }
     }
 
-    private val repository = ReportRepository()
+    private val repository = getApplication<X9Application>().reportRepository
 
     val reports: LiveData<List<TrafficReport>> = repository.reports
 

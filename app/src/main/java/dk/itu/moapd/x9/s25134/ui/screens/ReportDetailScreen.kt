@@ -31,10 +31,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,12 +45,14 @@ import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
 import dk.itu.moapd.x9.s25134.model.User
+import dk.itu.moapd.x9.s25134.ui.components.SeverityBadge
 import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
-import dk.itu.moapd.x9.s25134.ui.components.severityLabel
+import dk.itu.moapd.x9.s25134.ui.components.severityBgColor
 import dk.itu.moapd.x9.s25134.ui.components.typeEmoji
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
@@ -64,12 +66,20 @@ fun ReportDetailScreen(
     paddingValues: PaddingValues = PaddingValues()
 ) {
     val report = reports.find { it.id == reportId }
-    val showDeleteDialog = remember { mutableStateOf(false) }
+    val showDeleteDialog = rememberSaveable { mutableStateOf(false) }
 
     if (report == null) {
         // Report was deleted — go back
         LaunchedEffect(Unit) { onBack() }
         return
+    }
+
+    val dateFormatter = remember {
+        DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm", Locale.getDefault())
+            .withZone(ZoneId.systemDefault())
+    }
+    val dateFormatted = remember(report.createdAt) {
+        dateFormatter.format(Instant.ofEpochMilli(report.createdAt))
     }
 
     if (showDeleteDialog.value) {
@@ -90,24 +100,6 @@ fun ReportDetailScreen(
         )
     }
 
-    val severityColor = when (report.severity) {
-        Severity.CRITICAL -> colorResource(R.color.severity_critical)
-        Severity.HIGH     -> colorResource(R.color.severity_high)
-        Severity.MODERATE -> colorResource(R.color.severity_moderate)
-        Severity.LOW      -> colorResource(R.color.severity_low)
-        Severity.MINOR    -> colorResource(R.color.severity_minor)
-    }
-    val severityBgColor = when (report.severity) {
-        Severity.CRITICAL -> colorResource(R.color.severity_critical_bg)
-        Severity.HIGH     -> colorResource(R.color.severity_high_bg)
-        Severity.MODERATE -> colorResource(R.color.severity_moderate_bg)
-        Severity.LOW      -> colorResource(R.color.severity_low_bg)
-        Severity.MINOR    -> colorResource(R.color.severity_minor_bg)
-    }
-
-    val dateFormatted = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
-        .format(Date(report.createdAt))
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -127,7 +119,7 @@ fun ReportDetailScreen(
                     modifier = Modifier
                         .size(dimensionResource(R.dimen.icon_box_size_large))
                         .clip(RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)))
-                        .background(severityBgColor),
+                        .background(severityBgColor(report.severity)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = typeEmoji(report.type), fontSize = 26.sp)
@@ -139,20 +131,7 @@ fun ReportDetailScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(dimensionResource(R.dimen.badge_corner_radius)))
-                            .background(severityBgColor)
-                            .padding(horizontal = dimensionResource(R.dimen.card_severity_chip_padding_horizontal), vertical = dimensionResource(R.dimen.card_severity_chip_padding_vertical))
-                    ) {
-                        Text(
-                            text = severityLabel(report.severity),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = severityColor,
-                            letterSpacing = 0.5.sp
-                        )
-                    }
+                    SeverityBadge(severity = report.severity)
                 }
             }
 
@@ -166,7 +145,7 @@ fun ReportDetailScreen(
             }
             if (locationText != null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_small))) {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(dimensionResource(R.dimen.icon_size_location_pin)))
                     Text(
                         text = locationText,
                         style = MaterialTheme.typography.bodyMedium,
@@ -178,7 +157,7 @@ fun ReportDetailScreen(
 
             // Timestamp
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_small))) {
-                Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(dimensionResource(R.dimen.icon_size_location_pin)))
                 Text(text = dateFormatted, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 

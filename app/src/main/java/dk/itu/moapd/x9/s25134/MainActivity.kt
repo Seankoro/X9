@@ -63,7 +63,6 @@ class MainActivity : ComponentActivity() {
             val locationLng by reportFormViewModel.longitude.collectAsStateWithLifecycle()
             val isLoadingLocation by reportFormViewModel.isLoadingLocation.collectAsStateWithLifecycle()
             // MapViewModel state
-            val mapReports by mapViewModel.reports.observeAsState(initial = emptyList())
             val userLocation by mapViewModel.userLocation.collectAsStateWithLifecycle()
             val mapType by mapViewModel.mapType.collectAsStateWithLifecycle()
 
@@ -276,7 +275,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("map") {
                             MapScreen(
-                                reports = mapReports,
+                                reports = reports,
                                 userLocation = userLocation,
                                 mapType = mapType,
                                 onMapTypeChange = { mapViewModel.setMapType(it) },

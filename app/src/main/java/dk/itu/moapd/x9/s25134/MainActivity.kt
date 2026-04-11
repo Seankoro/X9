@@ -62,6 +62,8 @@ class MainActivity : ComponentActivity() {
             val locationLat by reportFormViewModel.latitude.collectAsStateWithLifecycle()
             val locationLng by reportFormViewModel.longitude.collectAsStateWithLifecycle()
             val isLoadingLocation by reportFormViewModel.isLoadingLocation.collectAsStateWithLifecycle()
+            val selectedImageUri by reportFormViewModel.selectedImageUri.collectAsStateWithLifecycle()
+            val isSubmitting by reportFormViewModel.isSubmitting.collectAsStateWithLifecycle()
             // MapViewModel state
             val userLocation by mapViewModel.userLocation.collectAsStateWithLifecycle()
             val mapType by mapViewModel.mapType.collectAsStateWithLifecycle()
@@ -84,6 +86,18 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(Unit) {
                 viewModel.error.collect { message ->
+                    snackbarHostState.showSnackbar(message)
+                }
+            }
+
+            LaunchedEffect(Unit) {
+                reportFormViewModel.submissionComplete.collect {
+                    navController.popBackStack()
+                }
+            }
+
+            LaunchedEffect(Unit) {
+                reportFormViewModel.submissionError.collect { message ->
                     snackbarHostState.showSnackbar(message)
                 }
             }
@@ -227,11 +241,11 @@ class MainActivity : ComponentActivity() {
                                 locationLat = locationLat,
                                 locationLng = locationLng,
                                 isLoadingLocation = isLoadingLocation,
+                                selectedImageUri = selectedImageUri,
+                                isSubmitting = isSubmitting,
                                 onRequestLocation = { reportFormViewModel.loadCurrentLocation() },
-                                onSubmit = { report ->
-                                    viewModel.addReport(report, currentUser?.uid)
-                                    navController.popBackStack()
-                                },
+                                onImageSelected = { uri -> reportFormViewModel.setImageUri(uri) },
+                                onSubmit = { report -> reportFormViewModel.submitNewReport(report) },
                                 onBack = { navController.popBackStack() },
                                 paddingValues = paddingValues
                             )
@@ -255,6 +269,9 @@ class MainActivity : ComponentActivity() {
                             val reportId = back.arguments?.getString("reportId") ?: return@composable
                             LaunchedEffect(reportId) {
                                 reportFormViewModel.reset()
+                                reports.find { it.id == reportId }?.let {
+                                    reportFormViewModel.loadFromExistingReport(it)
+                                }
                             }
                             ReportFormScreen(
                                 reportId = reportId,
@@ -264,10 +281,12 @@ class MainActivity : ComponentActivity() {
                                 locationLat = locationLat,
                                 locationLng = locationLng,
                                 isLoadingLocation = isLoadingLocation,
+                                selectedImageUri = selectedImageUri,
+                                isSubmitting = isSubmitting,
                                 onRequestLocation = { reportFormViewModel.loadCurrentLocation() },
+                                onImageSelected = { uri -> reportFormViewModel.setImageUri(uri) },
                                 onSubmit = { report ->
-                                    viewModel.updateReport(report, currentUser?.uid)
-                                    navController.popBackStack()
+                                    reportFormViewModel.submitUpdatedReport(report, currentUser?.uid)
                                 },
                                 onBack = { navController.popBackStack() },
                                 paddingValues = paddingValues

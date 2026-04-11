@@ -15,7 +15,8 @@ fun TrafficReport.toMap(): Map<String, Any?> = mapOf(
     "locationName" to locationName,
     "creatorId" to creatorId,
     "createdAt" to createdAt,
-    "updatedAt" to updatedAt
+    "updatedAt" to updatedAt,
+    "imageUrl" to imageUrl
 )
 
 fun DataSnapshot.toTrafficReport(): TrafficReport? {
@@ -31,6 +32,7 @@ fun DataSnapshot.toTrafficReport(): TrafficReport? {
         val creatorId = child("creatorId").getValue(String::class.java) ?: ""
         val createdAt = child("createdAt").getValue(Long::class.java) ?: 0L
         val updatedAt = child("updatedAt").getValue(Long::class.java) ?: 0L
+        val imageUrl = child("imageUrl").getValue(String::class.java)
         TrafficReport(
             id = id,
             type = type,
@@ -41,7 +43,8 @@ fun DataSnapshot.toTrafficReport(): TrafficReport? {
             locationName = locationName,
             creatorId = creatorId,
             createdAt = createdAt,
-            updatedAt = updatedAt
+            updatedAt = updatedAt,
+            imageUrl = imageUrl
         )
     } catch (e: Exception) {
         Log.e(TAG, "Failed to deserialize snapshot key=$key: ${e.message}", e)

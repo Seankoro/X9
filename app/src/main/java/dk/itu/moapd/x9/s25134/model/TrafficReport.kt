@@ -19,7 +19,8 @@ data class TrafficReport(
     val longitude: Double? = null,
     val locationName: String = "",
     val id: String = UUID.randomUUID().toString(),
-    val creatorId: String = "", // Firebase user ID of the creator of traffic report
+    val creatorId: String = "",
     val createdAt: Long = Instant.now().toEpochMilli(),
-    val updatedAt: Long = Instant.now().toEpochMilli()
+    val updatedAt: Long = Instant.now().toEpochMilli(),
+    val imageUrl: String? = null
 )

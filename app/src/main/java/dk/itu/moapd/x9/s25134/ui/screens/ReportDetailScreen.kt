@@ -35,12 +35,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
@@ -175,6 +178,32 @@ fun ReportDetailScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
+
+            if (report.imageUrl != null) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = dimensionResource(R.dimen.spacing_medium)))
+
+                Text(
+                    text = stringResource(R.string.label_photo_section),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xs)))
+
+                // AsyncImage handles downloading, decoding, and caching via Coil.
+                // The placeholder shows a loading indicator while the image fetches;
+                // the error parameter prevents a blank box on network failure.
+                AsyncImage(
+                    model = report.imageUrl,
+                    contentDescription = stringResource(R.string.cd_report_photo),
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(android.R.drawable.ic_menu_gallery),
+                    error = painterResource(android.R.drawable.ic_menu_report_image),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(dimensionResource(R.dimen.map_embed_height))
+                        .clip(RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)))
+                )
+            }
         }
 
         // Edit + Delete buttons — only shown to the report's creator

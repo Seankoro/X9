@@ -89,6 +89,16 @@
     <!-- Content descriptions -->
     <string name="cd_back">Back</string>
     <string name="cd_add_report">Add Report</string>
+    <string name="cd_report_photo">Report photo</string>
+
+    <!-- Photo / image -->
+    <string name="label_photo">Photo (optional)</string>
+    <string name="label_photo_section">Photo</string>
+    <string name="button_camera">Camera</string>
+    <string name="button_gallery">Gallery</string>
+    <string name="button_remove_photo">Remove photo</string>
+    <string name="error_image_upload_failed">Image upload failed. Report saved without photo.</string>
+    <string name="error_report_save_failed">Failed to save report. Please try again.</string>
 
     <!-- UI symbols -->
     <string name="chevron_right">›</string>

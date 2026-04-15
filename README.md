@@ -1,6 +1,6 @@
 # X9
 
-> **A community/ driven traffic reporting Android application**
+> **A community driven traffic reporting Android application**
 > Developed for ITU's Mobile App Development Coursework project
 
 ---

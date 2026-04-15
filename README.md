@@ -30,5 +30,7 @@ The application is developed fully in Kotlin and integrates with Firebase servic
 ## Support
 
 **Status**: In-development
+
 **Developers**: Mobile App Development, B.Sc. (Spring 2026): Group 19 - Loo Zhi Yi, Sean Elisha Koh Tze Li
+
 **Last updated**: April 2026

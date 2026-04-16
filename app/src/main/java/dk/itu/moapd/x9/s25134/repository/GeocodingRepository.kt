@@ -21,12 +21,18 @@ private interface GeocodingService {
     ): ReverseGeocodeResponse
 }
 
+/**
+ * Converts GPS coordinates to a human-readable address using the geocode.maps.co API.
+ * The Retrofit [service] is held in the companion object so it is created only once
+ * regardless of how many [GeocodingRepository] instances are constructed.
+ */
 class GeocodingRepository {
 
     companion object {
         private const val TAG = "GeocodingRepository"
         private const val BASE_URL = "https://geocode.maps.co/"
 
+        // Retrofit instance is process-scoped via companion object — one HTTP client shared by all callers.
         private val service: GeocodingService = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())

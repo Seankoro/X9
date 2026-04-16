@@ -1,8 +1,6 @@
 package dk.itu.moapd.x9.s25134.repository
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.google.firebase.Firebase
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -12,12 +10,21 @@ import dk.itu.moapd.x9.s25134.model.TrafficReport
 import dk.itu.moapd.x9.s25134.model.toMap
 import dk.itu.moapd.x9.s25134.model.toTrafficReport
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.time.Instant
 
-// Define database operations in the Repository file to create a layer of abstraction
-// Adheres to Single Responsibility principle and modularity
+/**
+ * Manages CRUD operations against the Firebase Realtime Database "reports" node.
+ * Maintains a persistent [ValueEventListener] while active so the local [reports]
+ * StateFlow stays in sync with remote changes in real time.
+ *
+ * Call [startListening] when the ViewModel is ready and [stopListening] in [onCleared]
+ * to avoid memory leaks.
+ */
 class ReportRepository {
 
     companion object {
@@ -27,8 +34,8 @@ class ReportRepository {
 
     private val reportsRef = Firebase.database.reference.child(DB_PATH_REPORTS)
 
-    private val _reports = MutableLiveData<List<TrafficReport>>()
-    val reports: LiveData<List<TrafficReport>> = _reports
+    private val _reports = MutableStateFlow<List<TrafficReport>>(emptyList())
+    val reports: StateFlow<List<TrafficReport>> = _reports.asStateFlow()
 
     private val _dbError = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val dbError: SharedFlow<String> = _dbError.asSharedFlow()

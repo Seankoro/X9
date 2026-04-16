@@ -9,7 +9,6 @@ import com.google.android.gms.maps.model.LatLng
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.X9Application
 import dk.itu.moapd.x9.s25134.model.TrafficReport
-import dk.itu.moapd.x9.s25134.repository.GeocodingRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -27,7 +26,7 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
     private val locationRepository = getApplication<X9Application>().locationRepository
     private val reportRepository = getApplication<X9Application>().reportRepository
     private val storageRepository = getApplication<X9Application>().storageRepository
-    private val geocodingRepository = GeocodingRepository()
+    private val geocodingRepository = getApplication<X9Application>().geocodingRepository
 
     private fun formatCoords(lat: Double, lng: Double): String =
         getApplication<Application>().getString(R.string.format_lat_lng, lat, lng)
@@ -142,6 +141,12 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
      * On success, emits [submissionComplete].
      */
     fun submitNewReport(report: TrafficReport) {
+        if (report.creatorId.isBlank()) {
+            _submissionError.tryEmit(
+                getApplication<Application>().getString(R.string.msg_sign_in_required)
+            )
+            return
+        }
         viewModelScope.launch {
             _isSubmitting.value = true
             try {

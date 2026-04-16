@@ -5,7 +5,6 @@ import android.content.Context
 import android.util.Log
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.X9Application
@@ -18,7 +17,15 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// AndroidViewModel because we need Application context for SharedPreferences and string resources.
+/**
+ * Owns the live list of reports and app-wide UI settings (dark mode).
+ *
+ * Uses [AndroidViewModel] to access Application context for SharedPreferences and
+ * string resources without leaking an Activity reference.
+ *
+ * [reports] is a [StateFlow] forwarded directly from [ReportRepository], consistent with
+ * the rest of the StateFlow-based state in the app.
+ */
 class ReportListViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {
@@ -44,7 +51,7 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
 
     private val repository = getApplication<X9Application>().reportRepository
 
-    val reports: LiveData<List<TrafficReport>> = repository.reports
+    val reports: StateFlow<List<TrafficReport>> = repository.reports
 
     // Unified error channel: merges database errors from the repository with
     // authorization rule violations enforced here in the ViewModel.
@@ -77,7 +84,7 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
 
     fun deleteReport(id: String, currentUserId: String?) {
         // Report must be a valid report in DB and only creators can delete their own report
-        val report = reports.value?.find { it.id == id }
+        val report = reports.value.find { it.id == id }
         // Block if the report is not in local cache or the caller is not the creator.
         if (report == null || report.creatorId != currentUserId) {
             emitError(getApplication<Application>().getString(R.string.error_not_owner_delete))

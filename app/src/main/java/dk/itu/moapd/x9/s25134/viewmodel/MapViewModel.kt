@@ -12,6 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * Manages map state: the user's current GPS position and the active map layer type.
+ * Location is loaded on demand rather than continuously to avoid draining the battery.
+ */
 class MapViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {

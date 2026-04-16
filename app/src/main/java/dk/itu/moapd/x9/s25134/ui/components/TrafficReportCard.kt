@@ -88,7 +88,7 @@ fun TrafficReportCard(
                 Row(
                     modifier = Modifier.padding(top = dimensionResource(R.dimen.spacing_xs)),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.card_secondary_row_spacing))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Schedule,
@@ -107,7 +107,7 @@ fun TrafficReportCard(
             // Right: severity badge + active dot
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.card_secondary_row_spacing))
             ) {
                 SeverityBadge(severity = report.severity)
                 Box(

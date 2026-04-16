@@ -123,7 +123,7 @@ fun ProfileScreen(
 
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(dimensionResource(R.dimen.icon_box_size_large))
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
@@ -197,7 +197,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showComingSoon.value = true }
-                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = 18.dp),
+                    .padding(horizontal = dimensionResource(R.dimen.screen_horizontal_padding), vertical = dimensionResource(R.dimen.profile_item_row_vertical_padding)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(

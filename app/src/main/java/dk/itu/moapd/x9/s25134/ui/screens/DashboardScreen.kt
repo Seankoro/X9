@@ -203,7 +203,8 @@ fun DashboardScreen(
                     count = "0",
                     label = stringResource(R.string.stat_resolved_today),
                     accentColor = colorResource(R.color.accent_yellow),
-                    modifier = Modifier.weight(1f).aspectRatio(1.45f)
+                    modifier = Modifier.weight(1f).aspectRatio(1.45f),
+                    onClick = { showComingSoon.value = true }
                 )
             }
         }

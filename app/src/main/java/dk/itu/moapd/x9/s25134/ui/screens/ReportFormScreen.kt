@@ -119,7 +119,6 @@ fun ReportFormScreen(
     var expanded by remember { mutableStateOf(false) }
     var selectedType by rememberSaveable(reportId) { mutableStateOf(existingReport?.type ?: trafficTypes[0]) }
     var description by rememberSaveable(reportId) { mutableStateOf(existingReport?.description ?: "") }
-    var descriptionError by rememberSaveable(reportId) { mutableStateOf<String?>(null) }
     var severityFloat by rememberSaveable(reportId) {
         mutableFloatStateOf(existingReport?.severity?.level?.toFloat() ?: 1f)
     }
@@ -131,7 +130,6 @@ fun ReportFormScreen(
     // Distinguishes "no photo selected" (keep existing imageUrl) from
     // "user clicked Remove" (set imageUrl to null on submit).
     var photoExplicitlyRemoved by rememberSaveable(reportId) { mutableStateOf(false) }
-    val errorEmptyDescription = stringResource(R.string.error_empty_description)
 
     // rememberSaveable is required here (not plain remember) because TakePicture opens
     // an external camera Activity. Android may recreate the calling Activity while the
@@ -278,14 +276,9 @@ fun ReportFormScreen(
             // Description field
             OutlinedTextField(
                 value = description,
-                onValueChange = {
-                    description = it
-                    if (it.trim().isNotEmpty()) descriptionError = null
-                },
+                onValueChange = { description = it },
                 label = { Text(stringResource(R.string.label_description)) },
                 placeholder = { Text(stringResource(R.string.hint_description)) },
-                isError = descriptionError != null,
-                supportingText = descriptionError?.let { { Text(it) } },
                 shape = RoundedCornerShape(dimensionResource(R.dimen.text_field_corner_radius)),
                 modifier = Modifier.fillMaxWidth().height(dimensionResource(R.dimen.text_field_description_height)),
                 maxLines = 4
@@ -503,7 +496,6 @@ fun ReportFormScreen(
             Button(
                 onClick = {
                     val trimmed = description.trim()
-                    if (trimmed.isEmpty()) { descriptionError = errorEmptyDescription; return@Button }
                     if (reportId == null) {
                         onSubmit(
                             TrafficReport(

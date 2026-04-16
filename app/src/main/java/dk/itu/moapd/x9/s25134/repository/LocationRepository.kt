@@ -9,7 +9,9 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.tasks.await
 
+/** Abstraction over the device GPS so callers don't depend on FusedLocationProviderClient directly. */
 interface LocationRepository {
+    /** Returns the device's current position, or null if permission is missing or the fix fails. */
     suspend fun getCurrentLocation(): LatLng?
 }
 

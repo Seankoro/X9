@@ -38,6 +38,8 @@
     in the service layer of the application.
     > _Note_: This feature is just a demo-feature and does not have full NLP capabilities and behavior is
     > largely restricted by simple keyword-based routing for code execution.
+3. Report clustering on Application's Map screen
+
 
 ## Testing and Evaluation
 
@@ -77,7 +79,7 @@ any human errors in the testing process.
     - Initially when we were implementing Google Maps functionality into X9, we wanted to provide 
     users with the functionality to perform place search, like how they would usually search for 
     places on Google Maps. This allowed users to create reports at locations that they are not 
-    physically at. However, the free API that we were using from `Geocoding API` was buggy and we 
+    physically at. However, the free API that we were using from `Geocoding API` was buggy, and we 
     could not replicate the behavior of Google Maps properly.
     - After much thought, we decided to implement the report creation workflow such that newly 
     created reports will be geolocated automatically with the user's current location. This is inline

@@ -1,10 +1,16 @@
 package dk.itu.moapd.x9.s25134.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.annotation.StringRes
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuthException
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.User
@@ -77,17 +83,30 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun signInWithGoogle(idToken: String) {
+    fun signInWithGoogleCredential(context: Context) {
         _isLoading.value = true
         viewModelScope.launch {
             try {
+                val credentialManager = CredentialManager.create(context)
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setServerClientId(getString(R.string.default_web_client_id))
+                    .setFilterByAuthorizedAccounts(false)
+                    .build()
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+                val result = credentialManager.getCredential(context = context, request = request)
+                val idToken = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
                 repository.signInWithGoogle(idToken)
-                Log.d(TAG, "signInWithGoogle success")
+                Log.d(TAG, "signInWithGoogleCredential success")
+            } catch (e: GetCredentialException) {
+                Log.e(TAG, "signInWithGoogleCredential credential error", e)
+                _authError.tryEmit(e.localizedMessage ?: getString(R.string.error_google_sign_in_failed))
             } catch (e: FirebaseAuthException) {
-                Log.e(TAG, "signInWithGoogle error: ${e.errorCode}", e)
+                Log.e(TAG, "signInWithGoogleCredential firebase error: ${e.errorCode}", e)
                 _authError.tryEmit(e.localizedMessage ?: getString(R.string.error_google_sign_in_failed))
             } catch (e: Exception) {
-                Log.e(TAG, "signInWithGoogle unexpected error", e)
+                Log.e(TAG, "signInWithGoogleCredential unexpected error", e)
                 _authError.tryEmit(e.localizedMessage ?: getString(R.string.error_google_sign_in_failed))
             } finally {
                 _isLoading.value = false

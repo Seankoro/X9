@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,14 +49,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
-import kotlinx.coroutines.launch
 
 enum class AuthMode { SIGN_IN, REGISTER }
 
@@ -66,10 +59,7 @@ fun LoginScreen(
     isLoading: Boolean,
     onSignInWithEmail: (email: String, password: String) -> Unit,
     onRegisterWithEmail: (displayName: String, email: String, password: String) -> Unit,
-    onSignInWithGoogle: (idToken: String) -> Unit,
-    // Called only for Credential Manager failures (before Firebase is reached).
-    // Firebase auth errors are surfaced via AuthViewModel.authError SharedFlow.
-    onAuthError: (String) -> Unit,
+    onSignInWithGoogle: (context: Context) -> Unit,
     onContinueAsGuest: () -> Unit,
     paddingValues: PaddingValues = PaddingValues()
 ) {
@@ -81,11 +71,9 @@ fun LoginScreen(
     var fieldError by remember { mutableStateOf<String?>(null) }
 
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
     val requiredError = stringResource(R.string.error_fields_required)
     val passwordMismatchError = stringResource(R.string.error_passwords_no_match)
-    val googleSignInFailedError = stringResource(R.string.error_google_sign_in_failed)
     val brandPrefix = stringResource(R.string.brand_name_prefix)
     val brandSuffix = stringResource(R.string.brand_name_suffix)
 
@@ -241,7 +229,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.login_field_to_button_spacing)))
 
             // Primary action button
             Button(
@@ -270,7 +258,7 @@ fun LoginScreen(
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(dimensionResource(R.dimen.progress_indicator_button_inline)),
                         color = MaterialTheme.colorScheme.onPrimary,
                         strokeWidth = 2.dp
                     )
@@ -306,18 +294,7 @@ fun LoginScreen(
 
             // Google Sign-In button
             OutlinedButton(
-                onClick = {
-                    scope.launch {
-                        val result = performGoogleSignIn(
-                            context = context,
-                            serverClientId = context.getString(R.string.default_web_client_id)
-                        )
-                        result.fold(
-                            onSuccess = { idToken -> onSignInWithGoogle(idToken) },
-                            onFailure = { e -> onAuthError(e.localizedMessage ?: googleSignInFailedError) }
-                        )
-                    }
-                },
+                onClick = { onSignInWithGoogle(context) },
                 enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -349,28 +326,6 @@ fun LoginScreen(
     }
 }
 
-// Executes the Credential Manager Google Sign-In flow and returns a Result wrapping the ID token.
-// Must be called from a coroutine with an Activity-derived Context (required by CredentialManager).
-private suspend fun performGoogleSignIn(
-    context: Context,
-    serverClientId: String
-): Result<String> {
-    val credentialManager = CredentialManager.create(context)
-    val googleIdOption = GetGoogleIdOption.Builder()
-        .setServerClientId(serverClientId)
-        .setFilterByAuthorizedAccounts(false)
-        .build()
-    val request = GetCredentialRequest.Builder()
-        .addCredentialOption(googleIdOption)
-        .build()
-    return try {
-        val result = credentialManager.getCredential(context = context, request = request)
-        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
-        Result.success(googleIdTokenCredential.idToken)
-    } catch (e: GetCredentialException) {
-        Result.failure(e)
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
@@ -381,7 +336,6 @@ private fun LoginScreenSignInPreview() {
             onSignInWithEmail = { _, _ -> },
             onRegisterWithEmail = { _, _, _ -> },
             onSignInWithGoogle = { _ -> },
-            onAuthError = { _ -> },
             onContinueAsGuest = {}
         )
     }

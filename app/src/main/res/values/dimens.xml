@@ -2,6 +2,7 @@
 <resources>
     <!-- Report card -->
     <dimen name="card_padding_horizontal">16dp</dimen>
+    <dimen name="card_secondary_row_spacing">6dp</dimen>
     <dimen name="card_padding_vertical">5dp</dimen>
     <dimen name="card_corner_radius">14dp</dimen>
     <dimen name="card_content_padding">16dp</dimen>
@@ -11,6 +12,7 @@
 
     <!-- Screens -->
     <dimen name="screen_horizontal_padding">20dp</dimen>
+    <dimen name="profile_item_row_vertical_padding">18dp</dimen>
     <dimen name="screen_header_vertical_padding">20dp</dimen>
     <dimen name="filter_label_padding_start">20dp</dimen>
     <dimen name="filter_chips_padding_horizontal">16dp</dimen>
@@ -77,6 +79,8 @@
     <dimen name="login_logo_size">80dp</dimen>
     <dimen name="login_spacing_section">32dp</dimen>
     <dimen name="button_height_toggle">44dp</dimen>
+    <dimen name="login_field_to_button_spacing">20dp</dimen>
+    <dimen name="progress_indicator_button_inline">20dp</dimen>
 
     <!-- Icon sizes -->
     <dimen name="icon_size_small">14dp</dimen>

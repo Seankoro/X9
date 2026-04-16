@@ -11,6 +11,11 @@ enum class Severity(val level: Int) {
     CRITICAL(5)
 }
 
+/**
+ * Core domain model for a traffic report. Latitude and longitude are nullable because
+ * location permission may be denied at submission time; the app still allows submission
+ * but will not show the report on the map.
+ */
 data class TrafficReport(
     val type: String,
     val description: String,

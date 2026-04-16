@@ -26,6 +26,8 @@ fun DataSnapshot.toTrafficReport(): TrafficReport? {
         val description = child("description").getValue(String::class.java) ?: return null
         val severityLevel = child("severity").getValue(Long::class.java)?.toInt() ?: return null
         val severity = Severity.entries.firstOrNull { it.level == severityLevel } ?: return null
+        // Firebase stores fractional Doubles correctly, but rounds whole numbers to Long
+        // (e.g. 55.0 becomes 55). Reading as Any and casting via Number handles both cases.
         val latitude = child("latitude").getValue(Any::class.java)?.let { (it as? Number)?.toDouble() }
         val longitude = child("longitude").getValue(Any::class.java)?.let { (it as? Number)?.toDouble() }
         val locationName = child("locationName").getValue(String::class.java) ?: ""

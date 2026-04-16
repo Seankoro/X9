@@ -21,7 +21,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.compose.runtime.livedata.observeAsState
 import dk.itu.moapd.x9.s25134.ui.components.X9BottomBar
 import dk.itu.moapd.x9.s25134.ui.screens.DashboardScreen
 import dk.itu.moapd.x9.s25134.ui.screens.LoginScreen
@@ -53,7 +52,7 @@ class MainActivity : ComponentActivity() {
         Log.d(TAG, "onCreate")
         setContent {
             val isDarkModePreference by viewModel.isDarkMode.collectAsStateWithLifecycle()
-            val reports by viewModel.reports.observeAsState(initial = emptyList())
+            val reports by viewModel.reports.collectAsStateWithLifecycle()
             val isDarkMode = isDarkModePreference ?: isSystemInDarkTheme()
             val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
 
@@ -78,6 +77,8 @@ class MainActivity : ComponentActivity() {
 
             val startDestination = "home"
 
+            // SharedFlow collectors for one-shot events. Each runs in its own LaunchedEffect
+            // so an error from one flow never blocks delivery from another.
             LaunchedEffect(Unit) {
                 authViewModel.authError.collect { message ->
                     snackbarHostState.showSnackbar(message)
@@ -90,6 +91,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // Navigate back when the form signals a successful submission.
             LaunchedEffect(Unit) {
                 reportFormViewModel.submissionComplete.collect {
                     navController.popBackStack()
@@ -102,6 +104,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            // Redirect to home automatically after a successful sign-in while on the login screen.
             LaunchedEffect(currentUser) {
                 if (currentUser != null && currentRoute == "login") {
                     navController.navigate("home") {
@@ -165,8 +168,7 @@ class MainActivity : ComponentActivity() {
                                 isLoading = isLoading,
                                 onSignInWithEmail = { e, p -> authViewModel.signInWithEmail(e, p) },
                                 onRegisterWithEmail = { name, e, p -> authViewModel.registerWithEmail(name, e, p) },
-                                onSignInWithGoogle = { idToken -> authViewModel.signInWithGoogle(idToken) },
-                                onAuthError = { scope.launch { snackbarHostState.showSnackbar(it) } },
+                                onSignInWithGoogle = { context -> authViewModel.signInWithGoogleCredential(context) },
                                 onContinueAsGuest = { navController.popBackStack() },
                                 paddingValues = paddingValues
                             )
@@ -233,6 +235,16 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("add") {
+                            // Self-protecting auth guard: redirect to login regardless of how
+                            // this destination is reached (deep link, back stack, etc.).
+                            if (currentUser == null) {
+                                LaunchedEffect(Unit) {
+                                    navController.navigate("login") {
+                                        popUpTo("add") { inclusive = true }
+                                    }
+                                }
+                                return@composable
+                            }
                             ReportFormScreen(
                                 reportId = null,
                                 reports = reports,

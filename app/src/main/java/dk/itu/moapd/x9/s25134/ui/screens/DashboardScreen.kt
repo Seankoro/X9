@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material3.AlertDialog
@@ -30,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -234,12 +232,6 @@ fun DashboardScreen(
                     icon = Icons.Default.Map,
                     label = stringResource(R.string.quick_action_view_map),
                     onClick = onNavigateToMap,
-                    modifier = Modifier.weight(1f)
-                )
-                QuickActionButton(
-                    icon = Icons.Default.CalendarToday,
-                    label = stringResource(R.string.quick_action_calendar),
-                    onClick = { showComingSoon.value = true },
                     modifier = Modifier.weight(1f)
                 )
             }

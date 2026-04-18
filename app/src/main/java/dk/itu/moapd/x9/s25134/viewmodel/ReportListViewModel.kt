@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
  * Uses [AndroidViewModel] to access Application context for SharedPreferences and
  * string resources without leaking an Activity reference.
  *
- * [reports] is a [StateFlow] forwarded directly from [ReportRepository], consistent with
+ * [reports] is a [StateFlow] forwarded directly from ReportRepository, consistent with
  * the rest of the StateFlow-based state in the app.
  */
 class ReportListViewModel(application: Application) : AndroidViewModel(application) {
@@ -64,6 +64,13 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             repository.dbError.collect { emitError(it) }
         }
+        // Keep registered geofences in sync with the live report list. Each emission
+        // from Firebase (add, update, delete) triggers a diff in GeofenceRepository.
+        viewModelScope.launch {
+            repository.reports.collect { updatedReports ->
+                getApplication<X9Application>().geofenceRepository.sync(updatedReports)
+            }
+        }
         Log.d(TAG, "ViewModel initialised — listening for reports")
     }
 
@@ -73,13 +80,8 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
         Log.d(TAG, "ViewModel cleared — listener detached")
     }
 
-    fun addReport(report: TrafficReport, currentUserId: String?) {
-        // Only authenticated users will be able to create new reports
-        if (currentUserId == null) {
-            emitError(getApplication<Application>().getString(R.string.msg_sign_in_required))
-            return
-        }
-        repository.addReport(report)
+    fun syncGeofences() {
+        getApplication<X9Application>().geofenceRepository.sync(reports.value)
     }
 
     fun deleteReport(id: String, currentUserId: String?) {
@@ -91,15 +93,6 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
             return
         }
         repository.deleteReport(id)
-    }
-
-    fun updateReport(report: TrafficReport, currentUserId: String?) {
-        // Report must be a valid report in DB and only creators of the report can edit it
-        if (report.creatorId != currentUserId) {
-            emitError(getApplication<Application>().getString(R.string.error_not_owner_edit))
-            return
-        }
-        repository.updateReport(report)
     }
 
     private fun emitError(message: String) {

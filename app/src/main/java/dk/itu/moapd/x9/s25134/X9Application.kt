@@ -4,7 +4,9 @@ import android.app.Application
 import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
+import dk.itu.moapd.x9.s25134.notification.NotificationHelper
 import dk.itu.moapd.x9.s25134.repository.GeocodingRepository
+import dk.itu.moapd.x9.s25134.repository.GeofenceRepository
 import dk.itu.moapd.x9.s25134.repository.LocationRepository
 import dk.itu.moapd.x9.s25134.repository.LocationRepositoryImpl
 import dk.itu.moapd.x9.s25134.repository.ReportRepository
@@ -25,10 +27,12 @@ class X9Application : Application() {
     val locationRepository: LocationRepository by lazy { LocationRepositoryImpl(this) }
     val storageRepository: StorageRepository by lazy { StorageRepository(this) }
     val geocodingRepository: GeocodingRepository by lazy { GeocodingRepository() }
+    val geofenceRepository: GeofenceRepository by lazy { GeofenceRepository(this) }
 
     override fun onCreate() {
         super.onCreate()
         Firebase.database.setPersistenceEnabled(true)
+        NotificationHelper.createChannel(this)
         Log.d(TAG, "Firebase disk persistence enabled")
     }
 }

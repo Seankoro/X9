@@ -63,7 +63,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -80,7 +79,6 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.TrafficReport
 import dk.itu.moapd.x9.s25134.ui.components.SeverityBadge
-import dk.itu.moapd.x9.s25134.ui.components.severityBgColor
 import dk.itu.moapd.x9.s25134.ui.components.typeEmoji
 import kotlin.math.roundToInt
 

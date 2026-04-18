@@ -128,6 +128,21 @@
     <string name="distance_meters">%1$d m away</string>
     <string name="distance_km">%1$.1f km away</string>
 
+    <!-- Permission rationale dialogs -->
+    <string name="perm_rationale_notif_title">Stay ahead of traffic hazards</string>
+    <string name="perm_rationale_notif_body">X9 alerts you the moment you approach a reported incident. Tap Continue, then Allow to enable these warnings.</string>
+    <string name="perm_rationale_fine_loc_title">Location needed for proximity alerts</string>
+    <string name="perm_rationale_fine_loc_body">X9 uses your precise location to detect nearby traffic reports. Without it, hazard alerts will not work.</string>
+    <string name="perm_rationale_bg_loc_title">Allow location while commuting</string>
+    <string name="perm_rationale_bg_loc_body">To warn you while navigating with the app closed, X9 needs location access in the background. On the next screen, choose \"Allow all the time\".</string>
+    <string name="perm_rationale_continue">Continue</string>
+    <string name="perm_rationale_not_now">Not now</string>
+
+    <!-- Proximity notifications -->
+    <string name="notif_channel_proximity_name">Proximity Alerts</string>
+    <string name="notif_channel_proximity_desc">Alerts when you are near a traffic report</string>
+    <string name="notif_proximity_title">Nearby %1$s %2$s</string>
+
     <string-array name="traffic_types">
         <item>Speed Camera</item>
         <item>Heavy Traffic</item>

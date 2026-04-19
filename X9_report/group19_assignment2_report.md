@@ -13,24 +13,132 @@ Members: Loo Zhi Yi, Sean Elisha Koh Tze Li
 
 ## Design Choices
 
+### Architecture choices
+
+The app follows **MVVM (Model-View-ViewModel)** with the **Repository pattern** that is accessed 
+through the different classes through an Application singleton `X9Application`.
+
+Each layer of the application namely, Model, Repository, ViewModel and UI, follows the single-responsibility
+principle.
+
+- **Model**: Data classes, `TrafficReport`, `User` and serialization logic with Firebase Realtime database
+- **Repository**: Data access to external services such as: Firebase Realtime DB, Firebase Storage,
+Firebase Auth, Geofencing, Geocoding etc.
+- **ViewModel**: Holds the business logic and the reactive state
+
+### Data classes
+
+The two main data classes in the application are `TrafficReport` and `User`.
+
+```mermaid
+classDiagram
+    class TrafficReport {
+        +String id
+        +String type
+        +String description
+        +Severity severity
+        +Double? latitude
+        +Double? longitude
+        +String locationName
+        +String creatorId
+        +Long createdAt
+        +Long updatedAt
+        +String? imageUrl
+        +toMap() Map
+    }
+
+    class Severity {
+        <<enumeration>>
+        MINOR = 1
+        LOW = 2
+        MODERATE = 3
+        HIGH = 4
+        CRITICAL = 5
+        +Int level
+    }
+
+    class User {
+        +String uid
+        +String displayName
+        +String email
+        +String photoUrl
+    }
+```
+
+---
+
 ## User Interfaces
+
+There are 7 main screens designed in X9, namely `DashboardScreen`, `LoginScreen`, `MapScreen`, 
+`ProfileScreen`, `ReportDetailScreen`, `ReportFormScreen`, `ReportListScreen`. We can discuss the 
+more prominent screens in X9 and briefly the design considerations behind each of these screens.
+
+### `DashboardScreen`
+
+![DashboardScreen](img/A2/dashboard.png){height=5cm}
+
+- At the top of the dashboard, there was also a `2x2` stat card that provides quick filter options to
+reports. E.g., there is the filter for `Active Reports` and `Resolved Today` reports. There is also
+filters to filter between your own created reports and critical reports. These quick filter options
+allow users to quickly fine reports that are of interest to them.
+- There are 2 `Quick Actions cards` namely `New Report` and `View Map` which allows users to quickly
+access the report creation workflow and view the maps quickly.
+- The `Recent Reports` section provides a list of summarized reports. Users can read recent reports 
+at a quick glance. A `View All` button also allows the users to access the list of all reports in 
+detail.
+- The `Bottom Nav Bar` is always at the bottom of X9. It provides clickable navigation buttons for 
+users regardless of where they are at in X9. The buttons are also named in such a way that their 
+functionality is self-explanatory to prevent any confusion among users.
+
+### Map Screen
+
+![Map Screen](img/A2/map-screen.png){height=5cm}
+
+- This is the Map screen where all reports are being shown as Red pins (< 4 in a cluster) or a red 
+circle labeled with the count of reports in that cluster.
+- Adopted a similar UI to an already familiar Google Maps using `Google Maps API` to prevent confusions.
+
+### Report Details screen
+
+![Report Details Screen](img/A2/report-details.png){height=5cm)
+
+- This page shows all details of a report to users. This includes fields like location, report type,
+severity, description, pictures (if any).
+- In this page, there is also authorization guard rails in place such that only the creators of that
+report can delete and edit them.
+
+### Report creation screen
+
+![Reoport creation screen](img/A2/report-form.png){height=5cm]
+
+- This page is where users create new reports. They must fill in the Report type, Description, choose
+a severity level and upload images if they want to.
+- Geolocation data is prepopulated automatically based on user's current location, it cannot be changed
+otherwise.
+- User's location is also represented by a small Google Maps composable and reverse Geocoded addresses.
+This provides users with both visual and textual ways to check if their current location is correct.
+
+---
 
 ## Extensions
 
 1. Geoproximity enabled notifications **_(Assignment 2 extra feature)_**
+
     - Similar to existing traffic navigation apps (Google Maps, Waze etc.), when users are within 
     the proximity of certain traffic reports, users will receive a notification about them.
     - We will implement Geofences of 500m around all reports with severity `HIGH` or `CRITICAL` and
-    will notify users about them with a cooldown of 1 hour.
+    will notify users about them with a cooldown of 1 hour tht is stored using `SharedPreferences`. 
+    This prevents the users from being spammed with notifications everytime X9 syncs with Firebase.
     - **Rationale**: Alerting users of the reports that concerns then while commuting, allowing them
     to take relevant actions to protect themselves.
 
-    ![Severity sorted notifications](img/A2/ordered-notifications.png)
+    ![Severity sorted notifications](img/A2/ordered-notifications.png){height=5cm}
 
     - **Tech stack**: Explored GeoFencing API to create Geofences for each of the reports and used a
     monitoring object to keep track of these Geofences and alert the users when necessary.
 
 2. Speech-enabled report creation **_(Assignment 2 extra feature)_**
+
     - With a tap of a single button, the user will be able to create a report through speech.
     - **Rationale**: When users are commuting with the app, having to manually provide text input to
     create reports will distract them from the actual road conditions. Having a one-tap work flow to
@@ -44,17 +152,21 @@ Members: Loo Zhi Yi, Sean Elisha Koh Tze Li
     > largely restricted by simple keyword-based routing for code execution._
 
 3. Report clustering on Application's Map screen
+
     - Each report is represented as a pin on the Maps screen which results in overlapping pins and a
-    bad UX for users. We explored Maps Compose Utils library from Google which provides a Clustering
-    composable and the ability to cluster nearby reports together. We implemented a threshold of 4
-    nearby reports which will be clustered into a red bubble with the number of reports shown.
+    bad UX for users.
+    - **Tech Stack**: Used `maps-compose-utils` library which provides a `clustering` composable.
+    Reports are passed as cluster items. The library handles distance-based grouping automatically. 
+    We also configured a threshold of 4 reports to trigger clustering into a red bubble count.
     - To allow users to navigate between each of the reports in the cluster, we designed a small 
     scrollable bar with the brief report details at the bottom of the maps. This allows users to 
     navigate between reports and view full details if they wanted to.
 
-   ![Report Clustering Example](img/A2/report-clustering.png)
+   ![Report Clustering Example](img/A2/report-clustering.png){height=5cm}
 
     > _Image showing report clustering on the map screen with scrollable report details_
+
+---
    
 ## Testing and Evaluation
 
@@ -63,6 +175,11 @@ exercises and work plans. We will come up with a simple internal document which 
 behavior of the application after this iteration. We understand that the best development practice is
 to write unit-tests using `Junit`. But in the interest of time and considering the scale of the project
 we decided that conducting smoke tests after each iteration will suffice.
+
+Both physical Android devices and Android studio's built-in Android emulator are being used during
+testing. Usually, physical devices are used for convenience and to get a "real feel" of how X9 will 
+feel on real phones. The emulator is only used for specific features (geo-proximity enabled notifications)
+to spoof the GPS location to test if the notifications are triggered correctly.
 
 The application is also developed in such a way that there is sufficient logging at key code execution
 points, which aids our debugging process when faced with problems during the smoke tests. Since there
@@ -87,6 +204,8 @@ any human errors in the testing process.
 > themselves can update and delete the reports.
 > ```
 
+---
+
 ## Problems
 
 1. Problematic place search.
@@ -104,13 +223,13 @@ any human errors in the testing process.
 
     - Permission requesting was done at the wrong places previously. `ACCESS_FINE_LOCATION` and 
     `ACCESS_COARSE_LOCATION` was only requested when users first access the Maps page of X9. For first
-    time users, when the app is first launched, neither `ACESS_FINE_LOCATION` nor `ACCESS_COARSE_LOCATION`
+    time users, when the app is first launched, neither `ACCESS_FINE_LOCATION` nor `ACCESS_COARSE_LOCATION`
     has been granted yet so `ACCESS_BACKGROUND_LOCATION` does not work.
     - Furthermore, there is an inherent race condition that cannot be avoided in the registering of
     Geofences. Geofences is registered once Firebase Realtime database emits the reports and without
     these permissions working correctly, Geofences cannot be registered correctly
    
-    ![Geofence register error](img/A2/geofence-logcat-error.png)
+    ![Geofence register error](img/A2/geofence-logcat-error.png){height=5cm}
 
     - To fix this, we implemented a guard + retry mechanism in `MainActivity.kt` that allows Geofences
     to fail silently when the permissions are not granted correctly. When they are granted by the users,
@@ -128,4 +247,4 @@ any human errors in the testing process.
     - To fix this, we sorted the reports according to severity such that the most severe report is
     shown at the top of the notification shade.
     
-    ![Severity sorted notifications](img/A2/ordered-notifications.png)
+    ![Severity sorted notifications](img/A2/ordered-notifications.png){height=5cm}

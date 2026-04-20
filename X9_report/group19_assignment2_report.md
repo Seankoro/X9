@@ -75,9 +75,9 @@ more prominent screens in X9 and briefly the design considerations behind each o
 
 ### `DashboardScreen`
 
-![DashboardScreen](img/A2/dashboard.png){height=5cm}
+![DashboardScreen](img/A2/dashboard.png)
 
-- At the top of the dashboard, there was also a `2x2` stat card that provides quick filter options to
+- At the top of the dashboard, there is a `2x2` stat card that provides quick filter options to
 reports. E.g., there is the filter for `Active Reports` and `Resolved Today` reports. There is also
 filters to filter between your own created reports and critical reports. These quick filter options
 allow users to quickly fine reports that are of interest to them.
@@ -92,7 +92,7 @@ functionality is self-explanatory to prevent any confusion among users.
 
 ### Map Screen
 
-![Map Screen](img/A2/map-screen.png){height=5cm}
+![Map Screen](img/A2/map-screen.png)
 
 - This is the Map screen where all reports are being shown as Red pins (< 4 in a cluster) or a red 
 circle labeled with the count of reports in that cluster.
@@ -132,7 +132,7 @@ This provides users with both visual and textual ways to check if their current 
     - **Rationale**: Alerting users of the reports that concerns then while commuting, allowing them
     to take relevant actions to protect themselves.
 
-    ![Severity sorted notifications](img/A2/ordered-notifications.png){height=5cm}
+    ![Severity sorted notifications](img/A2/ordered-notifications.png)
 
     - **Tech stack**: Explored GeoFencing API to create Geofences for each of the reports and used a
     monitoring object to keep track of these Geofences and alert the users when necessary.
@@ -162,7 +162,15 @@ This provides users with both visual and textual ways to check if their current 
     scrollable bar with the brief report details at the bottom of the maps. This allows users to 
     navigate between reports and view full details if they wanted to.
 
-   ![Report Clustering Example](img/A2/report-clustering.png){height=5cm}
+4. Offline persistence for Firebase realtime database
+
+    - As covered in the lecture, we implemented offline persistence in X9 using 
+    `Firebase.database.setPersistenceEnabled(true)` in `X9Application.kt`. 
+    - Including this before any uses of Firebase realtime database application code allows for local
+    reports to be cached offline on the user's device and then synced to Firebase realtime database 
+    when the users have internet connection again.
+
+   ![Report Clustering Example](img/A2/report-clustering.png)
 
     > _Image showing report clustering on the map screen with scrollable report details_
 
@@ -229,7 +237,7 @@ any human errors in the testing process.
     Geofences. Geofences is registered once Firebase Realtime database emits the reports and without
     these permissions working correctly, Geofences cannot be registered correctly
    
-    ![Geofence register error](img/A2/geofence-logcat-error.png){height=5cm}
+    ![Geofence register error](img/A2/geofence-logcat-error.png)
 
     - To fix this, we implemented a guard + retry mechanism in `MainActivity.kt` that allows Geofences
     to fail silently when the permissions are not granted correctly. When they are granted by the users,
@@ -247,4 +255,16 @@ any human errors in the testing process.
     - To fix this, we sorted the reports according to severity such that the most severe report is
     shown at the top of the notification shade.
     
-    ![Severity sorted notifications](img/A2/ordered-notifications.png){height=5cm}
+    ![Severity sorted notifications](img/A2/ordered-notifications.png)
+
+4. Firebase type mismatch during deserialization
+
+    - Firebase Realtime DB stores numbers without a type tag. When reading back a `Double`, latitude/
+    longitude that happenss to be a whole number _(e.g. 55.0)_. Firebase returns it as a `long`, 
+    casting it directly to `Double` throws an exception at runtime.
+    - The `ENUM` defined also cannot be deserialized directly to Firebase Realtime DB.
+    - To fix these issues, the `TrafficReportSerializer.kt` was implemented with functions like
+    `DataSnapshot.toTrafficReport()` extension function convert all numeric fields via 
+    `toSring().toDoubleOrNull()` to handle both `Long` and `Double` values transparently. The `Int`
+    and string fo the `ENUM` is also used in the serializer to safely convert between an `ENUM` and
+    what is stored in the database.

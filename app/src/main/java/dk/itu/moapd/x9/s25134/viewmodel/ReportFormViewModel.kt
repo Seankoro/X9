@@ -8,7 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.X9Application
+import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
+import dk.itu.moapd.x9.s25134.speech.SpeechResult
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -58,6 +60,13 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
     private val _submissionError = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val submissionError: SharedFlow<String> = _submissionError.asSharedFlow()
 
+    // --- Pre-fill state (populated from voice input) ---
+    private val _preFillType = MutableStateFlow<String?>(null)
+    val preFillType: StateFlow<String?> = _preFillType.asStateFlow()
+
+    private val _preFillSeverity = MutableStateFlow<Severity?>(null)
+    val preFillSeverity: StateFlow<Severity?> = _preFillSeverity.asStateFlow()
+
     /** Fetches GPS location and reverse geocodes it for display. */
     fun loadCurrentLocation() {
         viewModelScope.launch {
@@ -88,6 +97,16 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
         _latitude.value = report.latitude
         _longitude.value = report.longitude
         _locationDisplayName.value = report.locationName
+    }
+
+    fun preFill(result: SpeechResult) {
+        _preFillType.value = result.type
+        _preFillSeverity.value = result.severity
+    }
+
+    fun clearPreFill() {
+        _preFillType.value = null
+        _preFillSeverity.value = null
     }
 
     /**
@@ -182,5 +201,7 @@ class ReportFormViewModel(application: Application) : AndroidViewModel(applicati
         _longitude.value = null
         _isLoadingLocation.value = false
         _selectedImageUri.value = null
+        _preFillType.value = null
+        _preFillSeverity.value = null
     }
 }

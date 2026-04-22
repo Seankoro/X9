@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -40,6 +42,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -105,6 +108,11 @@ fun ReportFormScreen(
     isLoadingLocation: Boolean,
     selectedImageUri: Uri? = null,
     isSubmitting: Boolean = false,
+    preFillType: String? = null,
+    preFillSeverity: Severity? = null,
+    onPreFillConsumed: () -> Unit = {},
+    onVoiceClick: () -> Unit = {},
+    speechAvailable: Boolean = true,
     onRequestLocation: () -> Unit,
     onImageSelected: (Uri?) -> Unit = {},
     onSubmit: (TrafficReport) -> Unit,
@@ -124,7 +132,14 @@ fun ReportFormScreen(
     }
 
     val severity: Severity = Severity.entries[severityFloat.roundToInt() - 1]
-    val hasInput = description.isNotBlank()
+    val hasInput = description.isNotBlank() || selectedImageUri != null
+
+    LaunchedEffect(preFillType, preFillSeverity) {
+        if (preFillType != null) selectedType = preFillType
+        if (preFillSeverity != null) severityFloat = preFillSeverity.level.toFloat()
+        if (preFillType != null || preFillSeverity != null) onPreFillConsumed()
+    }
+
     val showDiscardDialog = rememberSaveable { mutableStateOf(false) }
     // Tracks whether the user deliberately removed the photo in edit mode.
     // Distinguishes "no photo selected" (keep existing imageUrl) from
@@ -216,12 +231,17 @@ fun ReportFormScreen(
         )
     }
 
-    Column(
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .padding(paddingValues)
-            .verticalScroll(rememberScrollState())
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = if (speechAvailable) 88.dp else 0.dp)
+        ) {
         ScreenHeader(
             title = if (isEditMode) stringResource(R.string.title_edit_report)
                     else stringResource(R.string.title_new_report),
@@ -551,6 +571,24 @@ fun ReportFormScreen(
                     Text(stringResource(R.string.button_submit), fontWeight = FontWeight.SemiBold)
                 }
             }
+        } // end inner Column
+        } // end outer Column
+
+        if (speechAvailable) {
+            FloatingActionButton(
+                onClick = onVoiceClick,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = stringResource(R.string.cd_voice_input)
+                )
+            }
         }
-    }
+
+    } // end Box
 }

@@ -33,6 +33,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import android.speech.SpeechRecognizer
+import dk.itu.moapd.x9.s25134.speech.SpeechUiState
+import dk.itu.moapd.x9.s25134.ui.components.SpeechOverlay
 import dk.itu.moapd.x9.s25134.ui.components.X9BottomBar
 import dk.itu.moapd.x9.s25134.ui.screens.DashboardScreen
 import dk.itu.moapd.x9.s25134.ui.screens.LoginScreen
@@ -46,6 +49,7 @@ import dk.itu.moapd.x9.s25134.viewmodel.AuthViewModel
 import dk.itu.moapd.x9.s25134.viewmodel.MapViewModel
 import dk.itu.moapd.x9.s25134.viewmodel.ReportFormViewModel
 import dk.itu.moapd.x9.s25134.viewmodel.ReportListViewModel
+import dk.itu.moapd.x9.s25134.viewmodel.SpeechViewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -65,6 +69,7 @@ class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
     private val mapViewModel: MapViewModel by viewModels()
     private val reportFormViewModel: ReportFormViewModel by viewModels()
+    private val speechViewModel: SpeechViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,6 +90,9 @@ class MainActivity : ComponentActivity() {
             // MapViewModel state
             val userLocation by mapViewModel.userLocation.collectAsStateWithLifecycle()
             val mapType by mapViewModel.mapType.collectAsStateWithLifecycle()
+            // ReportFormViewModel preFill state
+            val preFillType by reportFormViewModel.preFillType.collectAsStateWithLifecycle()
+            val preFillSeverity by reportFormViewModel.preFillSeverity.collectAsStateWithLifecycle()
 
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -93,6 +101,32 @@ class MainActivity : ComponentActivity() {
             val snackbarHostState = remember { SnackbarHostState() }
             val scope = rememberCoroutineScope()
             val signInRequiredText = stringResource(R.string.msg_sign_in_required)
+
+            // SpeechViewModel state
+            val speechUiState by speechViewModel.uiState.collectAsStateWithLifecycle()
+            val showSpeechOverlay = speechUiState != SpeechUiState.Idle
+            val isSpeechAvailable = remember { speechViewModel.isAvailable() }
+
+            val recordAudioLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                if (granted) speechViewModel.startListening()
+                else scope.launch {
+                    snackbarHostState.showSnackbar(getString(R.string.error_mic_permission))
+                }
+            }
+
+            fun onVoiceClick() {
+                if (currentUser == null) {
+                    scope.launch { snackbarHostState.showSnackbar(signInRequiredText) }
+                    return
+                }
+                val hasPermission = ContextCompat.checkSelfPermission(
+                    this@MainActivity, Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+                if (hasPermission) speechViewModel.startListening()
+                else recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
 
             val startDestination = "home"
 
@@ -198,6 +232,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val currentRouteState = androidx.compose.runtime.rememberUpdatedState(currentRoute)
+            LaunchedEffect(Unit) {
+                speechViewModel.speechResult.collect { result ->
+                    if (currentRouteState.value == "add") {
+                        reportFormViewModel.preFill(result)
+                    } else {
+                        reportFormViewModel.reset()
+                        reportFormViewModel.preFill(result)
+                        navController.navigate("add")
+                    }
+                }
+            }
+
             // Redirect to home automatically after a successful sign-in while on the login screen.
             LaunchedEffect(currentUser) {
                 if (currentUser != null && currentRoute == "login") {
@@ -284,6 +331,14 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                if (showSpeechOverlay) {
+                    SpeechOverlay(
+                        uiState = speechUiState,
+                        onRetry = { speechViewModel.startListening() },
+                        onDismiss = { speechViewModel.cancel() }
+                    )
+                }
+
                 Scaffold(
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     bottomBar = {
@@ -310,6 +365,8 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 },
+                                onVoiceClick = { onVoiceClick() },
+                                speechAvailable = isSpeechAvailable,
                                 onMapClick = {
                                     navController.navigate("map") {
                                         popUpTo("home") { saveState = true }
@@ -425,6 +482,11 @@ class MainActivity : ComponentActivity() {
                                 isLoadingLocation = isLoadingLocation,
                                 selectedImageUri = selectedImageUri,
                                 isSubmitting = isSubmitting,
+                                preFillType = preFillType,
+                                preFillSeverity = preFillSeverity,
+                                onPreFillConsumed = { reportFormViewModel.clearPreFill() },
+                                onVoiceClick = { onVoiceClick() },
+                                speechAvailable = isSpeechAvailable,
                                 onRequestLocation = { reportFormViewModel.loadCurrentLocation() },
                                 onImageSelected = { uri -> reportFormViewModel.setImageUri(uri) },
                                 onSubmit = { report -> reportFormViewModel.submitNewReport(report) },
@@ -464,6 +526,10 @@ class MainActivity : ComponentActivity() {
                                 isLoadingLocation = isLoadingLocation,
                                 selectedImageUri = selectedImageUri,
                                 isSubmitting = isSubmitting,
+                                preFillType = preFillType,
+                                preFillSeverity = preFillSeverity,
+                                onPreFillConsumed = { reportFormViewModel.clearPreFill() },
+                                onVoiceClick = { onVoiceClick() },
                                 onRequestLocation = { reportFormViewModel.loadCurrentLocation() },
                                 onImageSelected = { uri -> reportFormViewModel.setImageUri(uri) },
                                 onSubmit = { report ->

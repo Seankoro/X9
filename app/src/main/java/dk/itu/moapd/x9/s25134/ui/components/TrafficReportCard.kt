@@ -78,7 +78,7 @@ fun TrafficReportCard(
             // Center: title + location/time row
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = report.description,
+                    text = report.description.ifBlank { report.type },
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,

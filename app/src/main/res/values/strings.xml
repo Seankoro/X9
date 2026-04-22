@@ -143,6 +143,19 @@
     <string name="notif_channel_proximity_desc">Alerts when you are near a traffic report</string>
     <string name="notif_proximity_title">Nearby %1$s %2$s</string>
 
+    <!-- Speech / Voice input -->
+    <string name="speech_listening">Listening\u2026</string>
+    <string name="speech_no_match">Couldn\'t understand, please try again.</string>
+    <string name="speech_retry">Retry</string>
+    <string name="speech_use_voice">Use Voice</string>
+    <string name="speech_type_manually">Type Manually</string>
+    <string name="speech_add_report_title">Add Report</string>
+    <string name="cd_voice_input">Voice input</string>
+    <string name="error_mic_permission">Microphone permission is required to use voice input</string>
+    <string name="error_speech_network">No internet connection — try again</string>
+    <string name="error_speech_timeout">No speech detected — try again</string>
+    <string name="error_speech_failed">Speech recognition failed — try again</string>
+
     <string-array name="traffic_types">
         <item>Speed Camera</item>
         <item>Heavy Traffic</item>

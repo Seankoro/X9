@@ -30,40 +30,10 @@ Firebase Auth, Geofencing, Geocoding etc.
 
 The two main data classes in the application are `TrafficReport` and `User`.
 
-```mermaid
-classDiagram
-    class TrafficReport {
-        +String id
-        +String type
-        +String description
-        +Severity severity
-        +Double? latitude
-        +Double? longitude
-        +String locationName
-        +String creatorId
-        +Long createdAt
-        +Long updatedAt
-        +String? imageUrl
-        +toMap() Map
-    }
+![Data Classes](img/A2/data-classes.png)
 
-    class Severity {
-        <<enumeration>>
-        MINOR = 1
-        LOW = 2
-        MODERATE = 3
-        HIGH = 4
-        CRITICAL = 5
-        +Int level
-    }
-
-    class User {
-        +String uid
-        +String displayName
-        +String email
-        +String photoUrl
-    }
-```
+> _Note: Class diagram generated using Mermaid syntax and exported to .PNG files using online mermaid
+> editor_
 
 ---
 
@@ -100,7 +70,7 @@ circle labeled with the count of reports in that cluster.
 
 ### Report Details screen
 
-![Report Details Screen](img/A2/report-details.png){height=5cm)
+![Report Details Screen](img/A2/report-details.png)
 
 - This page shows all details of a report to users. This includes fields like location, report type,
 severity, description, pictures (if any).
@@ -109,7 +79,7 @@ report can delete and edit them.
 
 ### Report creation screen
 
-![Reoport creation screen](img/A2/report-form.png){height=5cm]
+![Reoport creation screen](img/A2/report-form.png)
 
 - This page is where users create new reports. They must fill in the Report type, Description, choose
 a severity level and upload images if they want to.
@@ -144,7 +114,9 @@ This provides users with both visual and textual ways to check if their current 
     create reports will distract them from the actual road conditions. Having a one-tap work flow to
     create reports allows them to focus on real-life traffic conditions while alerting X9 community
     about road conditions. 
-    - TODO: add screenshots of this feature when implemented
+   
+    ![Speech enabled report creation](img/A2/speech-enabled-report-creation.png)
+   
     - **Tech stack**: Explored Android SpeechRecognizer library which allows us to parse user's audio
     input into text tokens. These tokens are then processed and triggers their respective workflows 
     in the service layer of the application.
@@ -161,6 +133,10 @@ This provides users with both visual and textual ways to check if their current 
     - To allow users to navigate between each of the reports in the cluster, we designed a small 
     scrollable bar with the brief report details at the bottom of the maps. This allows users to 
     navigate between reports and view full details if they wanted to.
+    
+    ![Report Clustering Example](img/A2/report-clustering.png)
+
+    > _Image showing report clustering on the map screen with scrollable report details_
 
 4. Offline persistence for Firebase realtime database
 
@@ -170,10 +146,86 @@ This provides users with both visual and textual ways to check if their current 
     reports to be cached offline on the user's device and then synced to Firebase realtime database 
     when the users have internet connection again.
 
-   ![Report Clustering Example](img/A2/report-clustering.png)
+5. NavRoutes sealed navigation object
 
-    > _Image showing report clustering on the map screen with scrollable report details_
+    - Highlighted in Assignment 1 feedback, we were manually configuring navigation in X9. During 
+    re-submission, we refactored our manual navigation approach to Compose Navigation using
+    `NavHost` + `NavController`.
+    - In `MainActivity.kt` we defined the routes using raw string literals as shown in the code below:
 
+    ```kotlin
+    // Snippet from MainActivity.kt describing NavHost + NavController navigation
+    
+    // rest of file ...
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+        composable("login") {
+            val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
+            LoginScreen(
+                isLoading = isLoading,
+                onSignInWithEmail = { e, p -> authViewModel.signInWithEmail(e, p) },
+                onRegisterWithEmail = { name, e, p -> authViewModel.registerWithEmail(name, e, p) },
+                onSignInWithGoogle = { context -> authViewModel.signInWithGoogleCredential(context) },
+                onContinueAsGuest = { navController.popBackStack() },
+                paddingValues = paddingValues
+            )
+        }
+        // rest of file ...
+   }
+    ```
+
+    - While developing, we ran into a problem where there was a typo in the raw string literal
+    defining the route. This resulted in a silent run-time error which took us a really long time to
+    debug. We realized that having raw string literals in this navigation approach is not maintainable
+    and error-prone. For the scale of X9, it might still be acceptable but in actual production-level
+    applications, errors will be made easily. 
+    - Hence, we created a sealed `NavRoutes` object to centralize the defining of routes to a single
+    sealed object that can be accessed in other parts of the application. This prevents mistakes 
+    like what we made from happening and makes the codebase more maintainable as changes to the routes
+    only need to be made in one central location.
+
+    ```kotlin
+   // NavRoutes.kt
+    
+    object NavRoutes {
+        const val LOGIN = "login"
+        const val HOME = "home"
+        const val REPORTS = "reports"
+        const val REPORTS_ROUTE = "reports?myReportsOnly={myReportsOnly}&criticalOnly={criticalOnly}"
+        const val ADD = "add"
+        const val DETAIL_ROUTE = "detail/{reportId}"
+        const val EDIT_ROUTE = "edit/{reportId}"
+        const val MAP = "map"
+        const val PROFILE = "profile"
+    
+        fun detail(reportId: String) = "detail/$reportId"
+        fun edit(reportId: String) = "edit/$reportId"
+        fun reports(myReportsOnly: Boolean = false, criticalOnly: Boolean = false): String =
+            if (!myReportsOnly && !criticalOnly) REPORTS
+            else "$REPORTS?myReportsOnly=$myReportsOnly&criticalOnly=$criticalOnly"
+    }
+    ```
+   
+    > _`NavRoutes.kt` file showing where the routes are being defined_
+
+    ```kotlin
+    // MainActivity.kt
+    
+    // rest of file ...
+    LaunchedEffect(currentUser) {
+        if (currentUser != null && currentRoute == NavRoutes.LOGIN) {
+            navController.navigate(NavRoutes.HOME) {
+                popUpTo(NavRoutes.LOGIN) { inclusive = true }
+            }
+        }
+    }
+    // rest of file ...
+    ```
+
+    > _`MainActivity.kt` where it wires all the routing using routes defined in `NavRoutes.kt`_
+  
 ---
    
 ## Testing and Evaluation
@@ -224,7 +276,7 @@ any human errors in the testing process.
     physically at. However, the free API that we were using from `Geocoding API` was buggy, and we 
     could not replicate the behavior of Google Maps properly.
     - After much thought, we decided to implement the report creation workflow such that newly 
-    created reports will be geolocated automatically with the user's current location. This is inline
+    created reports will be geolocated automatically with the user's current location. This aligns
     with how Google Maps naviagation does it.
 
 2. Geofence always fails to register on first launch
@@ -250,8 +302,8 @@ any human errors in the testing process.
     - The notifications are correctly showing for reports with severity `HIGH` and `CRITICAL` but
     they are not sorted in any order. `HIGH` severity reports can be shown before `CRITICAL` reports
     in the notification shade.
-    - Even though this is purely a UI/UX error, we wanted to ensure the usability of X9. As a user,
-    I will be more concerned about `CRITICAL` reports compared to `HIGH` reports.
+    - Even though this is purely a UI/UX error, we developed with the usability of X9 in mind. As a 
+    user, I will be more concerned about `CRITICAL` reports compared to `HIGH` reports.
     - To fix this, we sorted the reports according to severity such that the most severe report is
     shown at the top of the notification shade.
     
@@ -260,7 +312,7 @@ any human errors in the testing process.
 4. Firebase type mismatch during deserialization
 
     - Firebase Realtime DB stores numbers without a type tag. When reading back a `Double`, latitude/
-    longitude that happenss to be a whole number _(e.g. 55.0)_. Firebase returns it as a `long`, 
+    longitude that happens to be a whole number _(e.g. 55.0)_. Firebase returns it as a `long`, 
     casting it directly to `Double` throws an exception at runtime.
     - The `ENUM` defined also cannot be deserialized directly to Firebase Realtime DB.
     - To fix these issues, the `TrafficReportSerializer.kt` was implemented with functions like
@@ -268,3 +320,41 @@ any human errors in the testing process.
     `toSring().toDoubleOrNull()` to handle both `Long` and `Double` values transparently. The `Int`
     and string fo the `ENUM` is also used in the serializer to safely convert between an `ENUM` and
     what is stored in the database.
+
+5. Difficulty to fully automate report creation using speech
+
+    - Initially, reports are validated such that descriptions of each report is non-nullable. We
+    tried to use SpeechRecognizer to automate the full report creation process, including filling up
+    the description field. However, we were unable to come up with a reliable way to effectively 
+    process the text tokens parsed by `SpeechRecognizer` and 'make sense' of the text tokens.
+    - We came to the conclusion that we need to pass the input to a NLP model to process the data
+    and create a Report object with the relevant fields filled up accordingly. Lacking monetary 
+    resources and access to an API key, we decided to give up on this automation.
+    - We came to a workaround where descriptions can now be left blank and reports can be created
+    using speech with simple keyword routing. A code snippet showing the simple keyword routing is
+    shown below:
+   
+    ```kotlin
+   // Snippet from the file SpeechParser.kt showing keyword mapping between speech tokens and Severity level
+   
+       // Helper to match parsed speech tokens to severity levels
+       private val severityKeywords : List<Pair<String, Severity>> = listOf(
+           "critical" to Severity.CRITICAL,
+           "severe" to Severity.CRITICAL,
+           "danger" to Severity.CRITICAL,
+           "serious" to Severity.HIGH,
+           "moderate" to Severity.MODERATE,
+           "medium" to Severity.MODERATE,
+           "minor" to Severity.MINOR,
+           "high" to Severity.HIGH,
+           "low" to Severity.LOW
+       )
+   ```
+
+    - This simple object handles the mapping logic between the parsed speech tokens (words spoken by
+    users) to report types and severity levels respectively. From the design of this object, we can
+    see that the list is non-exhaustive. There are countless synonyms to words and any words that 
+    fall outside the mapping will not make sense to the application.
+    - For MVP demo purposes, we have decided that this behavior is acceptable and given resources and
+    access to API tokens, we can make the controller level 'smarter' and truly automate the report
+    creation process.

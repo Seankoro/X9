@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>group19_assignment2_report</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {  background-color: #f8f8f8; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ef2929; } /* Alert */
+    code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #c4a000; } /* Attribute */
+    code span.bn { color: #0000cf; } /* BaseN */
+    code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4e9a06; } /* Char */
+    code span.cn { color: #000000; } /* Constant */
+    code span.co { color: #8f5902; font-style: italic; } /* Comment */
+    code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+    code span.dt { color: #204a87; } /* DataType */
+    code span.dv { color: #0000cf; } /* DecVal */
+    code span.er { color: #a40000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #0000cf; } /* Float */
+    code span.fu { color: #000000; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+    code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+    code span.ot { color: #8f5902; } /* Other */
+    code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+    code span.sc { color: #000000; } /* SpecialChar */
+    code span.ss { color: #4e9a06; } /* SpecialString */
+    code span.st { color: #4e9a06; } /* String */
+    code span.va { color: #000000; } /* Variable */
+    code span.vs { color: #4e9a06; } /* VerbatimString */
+    code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<h1 id="group-19-assignment-2-report">Group 19 Assignment 2 Report</h1>
+<p>Members: Loo Zhi Yi, Sean Elisha Koh Tze Li</p>
+<h2 id="overview---table-of-contents">Overview - Table of contents:</h2>
+<ol type="1">
+<li><strong><a href="#design-choices">Design Choices</a></strong></li>
+<li><strong><a href="#user-interfaces">User Interfaces</a></strong></li>
+<li><strong><a href="#extensions">Extensions</a></strong></li>
+<li><strong><a href="#testing-and-evaluation">Testing and Evaluation</a></strong></li>
+<li><strong><a href="#problems">Problems</a></strong></li>
+</ol>
+<hr />
+<h2 id="design-choices">Design Choices</h2>
+<h3 id="architecture-choices">Architecture choices</h3>
+<p>The app follows <strong>MVVM (Model-View-ViewModel)</strong> with the <strong>Repository pattern</strong> that is accessed through the different classes through an Application singleton <code>X9Application</code>.</p>
+<p>Each layer of the application namely, Model, Repository, ViewModel and UI, follows the single-responsibility principle.</p>
+<ul>
+<li><strong>Model</strong>: Data classes, <code>TrafficReport</code>, <code>User</code> and serialization logic with Firebase Realtime database</li>
+<li><strong>Repository</strong>: Data access to external services such as: Firebase Realtime DB, Firebase Storage, Firebase Auth, Geofencing, Geocoding etc.</li>
+<li><strong>ViewModel</strong>: Holds the business logic and the reactive state</li>
+</ul>
+<h3 id="data-classes">Data classes</h3>
+<p>The two main data classes in the application are <code>TrafficReport</code> and <code>User</code>.</p>
+<figure>
+<img src="img/A2/data-classes.png" alt="" /><figcaption>Data Classes</figcaption>
+</figure>
+<blockquote>
+<p><em>Note: Class diagram generated using Mermaid syntax and exported to .PNG files using online mermaid editor</em></p>
+</blockquote>
+<hr />
+<h2 id="user-interfaces">User Interfaces</h2>
+<p>There are 7 main screens designed in X9, namely <code>DashboardScreen</code>, <code>LoginScreen</code>, <code>MapScreen</code>, <code>ProfileScreen</code>, <code>ReportDetailScreen</code>, <code>ReportFormScreen</code>, <code>ReportListScreen</code>. We can discuss the more prominent screens in X9 and briefly the design considerations behind each of these screens.</p>
+<h3 id="dashboardscreen"><code>DashboardScreen</code></h3>
+<figure>
+<img src="img/A2/dashboard.png" alt="" /><figcaption>DashboardScreen</figcaption>
+</figure>
+<ul>
+<li>At the top of the dashboard, there is a <code>2x2</code> stat card that provides quick filter options to reports. E.g., there is the filter for <code>Active Reports</code> and <code>Resolved Today</code> reports. There is also filters to filter between your own created reports and critical reports. These quick filter options allow users to quickly fine reports that are of interest to them.</li>
+<li>There are 2 <code>Quick Actions cards</code> namely <code>New Report</code> and <code>View Map</code> which allows users to quickly access the report creation workflow and view the maps quickly.</li>
+<li>The <code>Recent Reports</code> section provides a list of summarized reports. Users can read recent reports at a quick glance. A <code>View All</code> button also allows the users to access the list of all reports in detail.</li>
+<li>The <code>Bottom Nav Bar</code> is always at the bottom of X9. It provides clickable navigation buttons for users regardless of where they are at in X9. The buttons are also named in such a way that their functionality is self-explanatory to prevent any confusion among users.</li>
+</ul>
+<h3 id="map-screen">Map Screen</h3>
+<figure>
+<img src="img/A2/map-screen.png" alt="" /><figcaption>Map Screen</figcaption>
+</figure>
+<ul>
+<li>This is the Map screen where all reports are being shown as Red pins (&lt; 4 in a cluster) or a red circle labeled with the count of reports in that cluster.</li>
+<li>Adopted a similar UI to an already familiar Google Maps using <code>Google Maps API</code> to prevent confusions.</li>
+</ul>
+<h3 id="report-details-screen">Report Details screen</h3>
+<figure>
+<img src="img/A2/report-details.png" alt="" /><figcaption>Report Details Screen</figcaption>
+</figure>
+<ul>
+<li>This page shows all details of a report to users. This includes fields like location, report type, severity, description, pictures (if any).</li>
+<li>In this page, there is also authorization guard rails in place such that only the creators of that report can delete and edit them.</li>
+</ul>
+<h3 id="report-creation-screen">Report creation screen</h3>
+<figure>
+<img src="img/A2/report-form.png" alt="" /><figcaption>Reoport creation screen</figcaption>
+</figure>
+<ul>
+<li>This page is where users create new reports. They must fill in the Report type, Description, choose a severity level and upload images if they want to.</li>
+<li>Geolocation data is prepopulated automatically based on user’s current location, it cannot be changed otherwise.</li>
+<li>User’s location is also represented by a small Google Maps composable and reverse Geocoded addresses. This provides users with both visual and textual ways to check if their current location is correct.</li>
+</ul>
+<hr />
+<h2 id="extensions">Extensions</h2>
+<ol type="1">
+<li><p>Geoproximity enabled notifications <strong><em>(Assignment 2 extra feature)</em></strong></p>
+<ul>
+<li>Similar to existing traffic navigation apps (Google Maps, Waze etc.), when users are within the proximity of certain traffic reports, users will receive a notification about them.</li>
+<li>We will implement Geofences of 500m around all reports with severity <code>HIGH</code> or <code>CRITICAL</code> and will notify users about them with a cooldown of 1 hour tht is stored using <code>SharedPreferences</code>. This prevents the users from being spammed with notifications everytime X9 syncs with Firebase.</li>
+<li><strong>Rationale</strong>: Alerting users of the reports that concerns then while commuting, allowing them to take relevant actions to protect themselves.</li>
+</ul>
+<figure>
+<img src="img/A2/ordered-notifications.png" alt="" /><figcaption>Severity sorted notifications</figcaption>
+</figure>
+<ul>
+<li><strong>Tech stack</strong>: Explored GeoFencing API to create Geofences for each of the reports and used a monitoring object to keep track of these Geofences and alert the users when necessary.</li>
+</ul></li>
+<li><p>Speech-enabled report creation <strong><em>(Assignment 2 extra feature)</em></strong></p>
+<ul>
+<li>With a tap of a single button, the user will be able to create a report through speech.</li>
+<li><strong>Rationale</strong>: When users are commuting with the app, having to manually provide text input to create reports will distract them from the actual road conditions. Having a one-tap work flow to create reports allows them to focus on real-life traffic conditions while alerting X9 community about road conditions.</li>
+</ul>
+<figure>
+<img src="img/A2/speech-enabled-report-creation.png" alt="" /><figcaption>Speech enabled report creation</figcaption>
+</figure>
+<ul>
+<li><strong>Tech stack</strong>: Explored Android SpeechRecognizer library which allows us to parse user’s audio input into text tokens. These tokens are then processed and triggers their respective workflows in the service layer of the application. &gt; <em>Note: This feature is just a demo-feature and does not have full NLP capabilities and behavior is &gt; largely restricted by simple keyword-based routing for code execution.</em></li>
+</ul></li>
+<li><p>Report clustering on Application’s Map screen</p>
+<ul>
+<li>Each report is represented as a pin on the Maps screen which results in overlapping pins and a bad UX for users.</li>
+<li><strong>Tech Stack</strong>: Used <code>maps-compose-utils</code> library which provides a <code>clustering</code> composable. Reports are passed as cluster items. The library handles distance-based grouping automatically. We also configured a threshold of 4 reports to trigger clustering into a red bubble count.</li>
+<li>To allow users to navigate between each of the reports in the cluster, we designed a small scrollable bar with the brief report details at the bottom of the maps. This allows users to navigate between reports and view full details if they wanted to.</li>
+</ul>
+<figure>
+<img src="img/A2/report-clustering.png" alt="" /><figcaption>Report Clustering Example</figcaption>
+</figure>
+<blockquote>
+<p><em>Image showing report clustering on the map screen with scrollable report details</em></p>
+</blockquote></li>
+<li><p>Offline persistence for Firebase realtime database</p>
+<ul>
+<li>As covered in the lecture, we implemented offline persistence in X9 using <code>Firebase.database.setPersistenceEnabled(true)</code> in <code>X9Application.kt</code>.</li>
+<li>Including this before any uses of Firebase realtime database application code allows for local reports to be cached offline on the user’s device and then synced to Firebase realtime database when the users have internet connection again.</li>
+</ul></li>
+<li><p>NavRoutes sealed navigation object</p>
+<ul>
+<li>Highlighted in Assignment 1 feedback, we were manually configuring navigation in X9. During re-submission, we refactored our manual navigation approach to Compose Navigation using <code>NavHost</code> + <code>NavController</code>.</li>
+<li>In <code>MainActivity.kt</code> we defined the routes using raw string literals as shown in the code below:</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre class="sourceCode kotlin"><code class="sourceCode kotlin"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="co">// Snippet from MainActivity.kt describing NavHost + NavController navigation</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="co">// rest of file ...</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>NavHost(</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>    navController = navController,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>    startDestination = startDestination</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>) {</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>    composable(<span class="st">&quot;login&quot;</span>) {</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>        <span class="kw">val</span> <span class="va">isLoading</span> <span class="kw">by</span> authViewModel.isLoading.collectAsStateWithLifecycle()</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>        LoginScreen(</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>            isLoading = isLoading,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>            onSignInWithEmail = { e, p -&gt; authViewModel.signInWithEmail(e, p) },</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a>            onRegisterWithEmail = { name, e, p -&gt; authViewModel.registerWithEmail(name, e, p) },</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a>            onSignInWithGoogle = { context -&gt; authViewModel.signInWithGoogleCredential(context) },</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a>            onContinueAsGuest = { navController.popBackStack() },</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a>            paddingValues = paddingValues</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a>        )</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a>    }</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a>    <span class="co">// rest of file ...</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a>}</span></code></pre></div>
+<ul>
+<li>While developing, we ran into a problem where there was a typo in the raw string literal defining the route. This resulted in a silent run-time error which took us a really long time to debug. We realized that having raw string literals in this navigation approach is not maintainable and error-prone. For the scale of X9, it might still be acceptable but in actual production-level applications, errors will be made easily.</li>
+<li>Hence, we created a sealed <code>NavRoutes</code> object to centralize the defining of routes to a single sealed object that can be accessed in other parts of the application. This prevents mistakes like what we made from happening and makes the codebase more maintainable as changes to the routes only need to be made in one central location.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre class="sourceCode kotlin"><code class="sourceCode kotlin"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">// NavRoutes.kt</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="kw">object</span> NavRoutes {</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    const <span class="kw">val</span> <span class="va">LOGIN</span> = <span class="st">&quot;login&quot;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    const <span class="kw">val</span> <span class="va">HOME</span> = <span class="st">&quot;home&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    const <span class="kw">val</span> <span class="va">REPORTS</span> = <span class="st">&quot;reports&quot;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>    const <span class="kw">val</span> <span class="va">REPORTS_ROUTE</span> = <span class="st">&quot;reports?myReportsOnly={myReportsOnly}&amp;criticalOnly={criticalOnly}&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    const <span class="kw">val</span> <span class="va">ADD</span> = <span class="st">&quot;add&quot;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    const <span class="kw">val</span> <span class="va">DETAIL_ROUTE</span> = <span class="st">&quot;detail/{reportId}&quot;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    const <span class="kw">val</span> <span class="va">EDIT_ROUTE</span> = <span class="st">&quot;edit/{reportId}&quot;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    const <span class="kw">val</span> <span class="va">MAP</span> = <span class="st">&quot;map&quot;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    const <span class="kw">val</span> <span class="va">PROFILE</span> = <span class="st">&quot;profile&quot;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    <span class="kw">fun</span> <span class="fu">detail</span>(<span class="va">reportId</span>: <span class="dt">String</span>) = <span class="st">&quot;detail/$reportId&quot;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>    <span class="kw">fun</span> <span class="fu">edit</span>(<span class="va">reportId</span>: <span class="dt">String</span>) = <span class="st">&quot;edit/$reportId&quot;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>    <span class="kw">fun</span> <span class="fu">reports</span>(<span class="va">myReportsOnly</span>: <span class="dt">Boolean</span> = false, <span class="va">criticalOnly</span>: <span class="dt">Boolean</span> = false): <span class="dt">String</span> =</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>        <span class="cf">if</span> (!myReportsOnly &amp;&amp; !criticalOnly) REPORTS</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>        <span class="cf">else</span> <span class="st">&quot;$REPORTS?myReportsOnly=$myReportsOnly&amp;criticalOnly=$criticalOnly&quot;</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>}</span></code></pre></div>
+<blockquote>
+<p><em><code>NavRoutes.kt</code> file showing where the routes are being defined</em></p>
+</blockquote>
+<div class="sourceCode" id="cb3"><pre class="sourceCode kotlin"><code class="sourceCode kotlin"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">// MainActivity.kt</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="co">// rest of file ...</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>LaunchedEffect(currentUser) {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>    <span class="cf">if</span> (currentUser != <span class="kw">null</span> &amp;&amp; currentRoute == NavRoutes.LOGIN) {</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>        navController.navigate(NavRoutes.HOME) {</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>            popUpTo(NavRoutes.LOGIN) { inclusive = <span class="kw">true</span> }</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>        }</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>    }</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>}</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a><span class="co">// rest of file ...</span></span></code></pre></div>
+<blockquote>
+<p><em><code>MainActivity.kt</code> where it wires all the routing using routes defined in <code>NavRoutes.kt</code></em></p>
+</blockquote></li>
+</ol>
+<hr />
+<h2 id="testing-and-evaluation">Testing and Evaluation</h2>
+<p>Before each iteration of the application, we will look through the requirements stated in the weekly exercises and work plans. We will come up with a simple internal document which describes the expected behavior of the application after this iteration. We understand that the best development practice is to write unit-tests using <code>Junit</code>. But in the interest of time and considering the scale of the project we decided that conducting smoke tests after each iteration will suffice.</p>
+<p>Both physical Android devices and Android studio’s built-in Android emulator are being used during testing. Usually, physical devices are used for convenience and to get a “real feel” of how X9 will feel on real phones. The emulator is only used for specific features (geo-proximity enabled notifications) to spoof the GPS location to test if the notifications are triggered correctly.</p>
+<p>The application is also developed in such a way that there is sufficient logging at key code execution points, which aids our debugging process when faced with problems during the smoke tests. Since there is no solid testing pipelines in place, we try to limit the blast radius of potential issues by adopting trunk-based development. Starting each iteration in their respective branches and only merging back to <code>main</code> when we are satisfied with the behavior. Given more time, we will want to explore incorporating a <code>JUnit</code> testing pipeline to ensure the correctness of the code and eliminate any human errors in the testing process.</p>
+<blockquote>
+<p>Example of internal document used for smoke tests:</p>
+<pre class="text"><code>X9-Version-6 requirements:
+1.) Successful sign-up work flow.
+- Offloaded to firebase auth, just need to test if new users can create account successfully
+- Edge cases: duplicate emails, usernames etc. 
+2.) Successful log-in, log-out workflow
+- Users should be authenticate and terminate their session gracefully while using the application
+- Check logcat for correct detection of authentication state.
+3.) Authentication and authorization checks
+- ALL users can read the traffic reports, no matter authenticated or not
+- For update and delete workflows, authorization workflow is such that only creators of the reports 
+themselves can update and delete the reports.</code></pre>
+</blockquote>
+<hr />
+<h2 id="problems">Problems</h2>
+<ol type="1">
+<li><p>Problematic place search.</p>
+<ul>
+<li>Initially when we were implementing Google Maps functionality into X9, we wanted to provide users with the functionality to perform place search, like how they would usually search for places on Google Maps. This allowed users to create reports at locations that they are not physically at. However, the free API that we were using from <code>Geocoding API</code> was buggy, and we could not replicate the behavior of Google Maps properly.</li>
+<li>After much thought, we decided to implement the report creation workflow such that newly created reports will be geolocated automatically with the user’s current location. This aligns with how Google Maps naviagation does it.</li>
+</ul></li>
+<li><p>Geofence always fails to register on first launch</p>
+<ul>
+<li>Permission requesting was done at the wrong places previously. <code>ACCESS_FINE_LOCATION</code> and <code>ACCESS_COARSE_LOCATION</code> was only requested when users first access the Maps page of X9. For first time users, when the app is first launched, neither <code>ACCESS_FINE_LOCATION</code> nor <code>ACCESS_COARSE_LOCATION</code> has been granted yet so <code>ACCESS_BACKGROUND_LOCATION</code> does not work.</li>
+<li>Furthermore, there is an inherent race condition that cannot be avoided in the registering of Geofences. Geofences is registered once Firebase Realtime database emits the reports and without these permissions working correctly, Geofences cannot be registered correctly</li>
+</ul>
+<figure>
+<img src="img/A2/geofence-logcat-error.png" alt="" /><figcaption>Geofence register error</figcaption>
+</figure>
+<ul>
+<li>To fix this, we implemented a guard + retry mechanism in <code>MainActivity.kt</code> that allows Geofences to fail silently when the permissions are not granted correctly. When they are granted by the users, the Geofences will then be triggered to be registered again. With this fix, Geofences will be registered properly and new users will be able to get geo-proximity enabled notifications even if it is their first time using the app.</li>
+</ul></li>
+<li><p>Lack of severity sorting for report notifications</p>
+<ul>
+<li>The notifications are correctly showing for reports with severity <code>HIGH</code> and <code>CRITICAL</code> but they are not sorted in any order. <code>HIGH</code> severity reports can be shown before <code>CRITICAL</code> reports in the notification shade.</li>
+<li>Even though this is purely a UI/UX error, we developed with the usability of X9 in mind. As a user, I will be more concerned about <code>CRITICAL</code> reports compared to <code>HIGH</code> reports.</li>
+<li>To fix this, we sorted the reports according to severity such that the most severe report is shown at the top of the notification shade.</li>
+</ul>
+<figure>
+<img src="img/A2/ordered-notifications.png" alt="" /><figcaption>Severity sorted notifications</figcaption>
+</figure></li>
+<li><p>Firebase type mismatch during deserialization</p>
+<ul>
+<li>Firebase Realtime DB stores numbers without a type tag. When reading back a <code>Double</code>, latitude/ longitude that happens to be a whole number <em>(e.g. 55.0)</em>. Firebase returns it as a <code>long</code>, casting it directly to <code>Double</code> throws an exception at runtime.</li>
+<li>The <code>ENUM</code> defined also cannot be deserialized directly to Firebase Realtime DB.</li>
+<li>To fix these issues, the <code>TrafficReportSerializer.kt</code> was implemented with functions like <code>DataSnapshot.toTrafficReport()</code> extension function convert all numeric fields via <code>toSring().toDoubleOrNull()</code> to handle both <code>Long</code> and <code>Double</code> values transparently. The <code>Int</code> and string fo the <code>ENUM</code> is also used in the serializer to safely convert between an <code>ENUM</code> and what is stored in the database.</li>
+</ul></li>
+<li><p>Difficulty to fully automate report creation using speech</p>
+<ul>
+<li>Initially, reports are validated such that descriptions of each report is non-nullable. We tried to use SpeechRecognizer to automate the full report creation process, including filling up the description field. However, we were unable to come up with a reliable way to effectively process the text tokens parsed by <code>SpeechRecognizer</code> and ‘make sense’ of the text tokens.</li>
+<li>We came to the conclusion that we need to pass the input to a NLP model to process the data and create a Report object with the relevant fields filled up accordingly. Lacking monetary resources and access to an API key, we decided to give up on this automation.</li>
+<li>We came to a workaround where descriptions can now be left blank and reports can be created using speech with simple keyword routing. A code snippet showing the simple keyword routing is shown below:</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="sourceCode kotlin"><code class="sourceCode kotlin"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="co">// Snippet from the file SpeechParser.kt showing keyword mapping between speech tokens and Severity level</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>   <span class="co">// Helper to match parsed speech tokens to severity levels</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>   <span class="kw">private</span> <span class="kw">val</span> <span class="va">severityKeywords</span> : List&lt;Pair&lt;<span class="kw">String</span>, Severity&gt;&gt; = listOf(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>       <span class="st">&quot;critical&quot;</span> to Severity.CRITICAL,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>       <span class="st">&quot;severe&quot;</span> to Severity.CRITICAL,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>       <span class="st">&quot;danger&quot;</span> to Severity.CRITICAL,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>       <span class="st">&quot;serious&quot;</span> to Severity.HIGH,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>       <span class="st">&quot;moderate&quot;</span> to Severity.MODERATE,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>       <span class="st">&quot;medium&quot;</span> to Severity.MODERATE,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>       <span class="st">&quot;minor&quot;</span> to Severity.MINOR,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>       <span class="st">&quot;high&quot;</span> to Severity.HIGH,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>       <span class="st">&quot;low&quot;</span> to Severity.LOW</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>   )</span></code></pre></div>
+<ul>
+<li>This simple object handles the mapping logic between the parsed speech tokens (words spoken by users) to report types and severity levels respectively. From the design of this object, we can see that the list is non-exhaustive. There are countless synonyms to words and any words that fall outside the mapping will not make sense to the application.</li>
+<li>For MVP demo purposes, we have decided that this behavior is acceptable and given resources and access to API tokens, we can make the controller level ‘smarter’ and truly automate the report creation process.</li>
+</ul></li>
+</ol>
+</body>
+</html>

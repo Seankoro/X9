@@ -21,9 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,8 +41,10 @@ import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
 import dk.itu.moapd.x9.s25134.model.User
+import dk.itu.moapd.x9.s25134.ui.components.QuickActionButton
 import dk.itu.moapd.x9.s25134.ui.components.StatCard
 import dk.itu.moapd.x9.s25134.ui.components.TrafficReportCard
+import dk.itu.moapd.x9.s25134.ui.components.userInitials
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 import java.util.Calendar
 
@@ -122,12 +120,7 @@ fun DashboardScreen(
                     )
                 }
                 // Avatar — tappable shortcut to Profile
-                val avatarInitials = currentUser?.displayName
-                    ?.split(" ")
-                    ?.filter { it.isNotBlank() }
-                    ?.take(2)
-                    ?.joinToString("") { it.first().uppercase() }
-                    ?.ifEmpty { currentUser.email.first().uppercase() }
+                val avatarInitials = currentUser?.let { userInitials(it.displayName, it.email) }
                 Box(
                     modifier = Modifier
                         .size(dimensionResource(R.dimen.icon_box_size))
@@ -267,42 +260,6 @@ fun DashboardScreen(
             TrafficReportCard(
                 report = report,
                 onClick = { onNavigateToDetail(report.id) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun QuickActionButton(
-    icon: ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        onClick = onClick
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = dimensionResource(R.dimen.spacing_medium)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_small))
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(dimensionResource(R.dimen.quick_action_icon_size))
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold
             )
         }
     }

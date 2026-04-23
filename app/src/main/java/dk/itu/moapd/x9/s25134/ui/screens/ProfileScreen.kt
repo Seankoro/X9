@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.User
 import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
+import dk.itu.moapd.x9.s25134.ui.components.userInitials
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 
 @Composable
@@ -114,12 +115,7 @@ fun ProfileScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Initials avatar
-                val initials = currentUser.displayName
-                    .split(" ")
-                    .filter { it.isNotBlank() }
-                    .take(2)
-                    .joinToString("") { it.first().uppercase() }
-                    .ifEmpty { currentUser.email.first().uppercase() }
+                val initials = userInitials(currentUser.displayName, currentUser.email)
 
                 Box(
                     modifier = Modifier
@@ -228,7 +224,7 @@ fun ProfileScreen(
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = MaterialTheme.colorScheme.error
                 ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                border = androidx.compose.foundation.BorderStroke(dimensionResource(R.dimen.card_border_width), MaterialTheme.colorScheme.error)
             ) {
                 Text(
                     text = stringResource(R.string.btn_sign_out),

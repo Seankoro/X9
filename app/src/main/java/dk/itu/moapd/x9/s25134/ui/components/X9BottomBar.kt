@@ -43,6 +43,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dk.itu.moapd.x9.s25134.NavRoutes
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 
@@ -58,9 +59,9 @@ fun X9BottomBar(
     onProfileClick: () -> Unit,
     speechAvailable: Boolean = true
 ) {
-    val isReportsActive = (currentRoute == "reports" || currentRoute?.startsWith("reports?") == true) ||
-        currentRoute == "detail/{reportId}" ||
-        currentRoute == "edit/{reportId}"
+    val isReportsActive = (currentRoute == NavRoutes.REPORTS || currentRoute?.startsWith("${NavRoutes.REPORTS}?") == true) ||
+        currentRoute == NavRoutes.DETAIL_ROUTE ||
+        currentRoute == NavRoutes.EDIT_ROUTE
 
     var showAddSheet by remember { mutableStateOf(false) }
     val addSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -74,9 +75,9 @@ fun X9BottomBar(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .padding(horizontal = dimensionResource(R.dimen.spacing_large), vertical = dimensionResource(R.dimen.spacing_small))
                     .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_small))
             ) {
                 Text(
                     text = stringResource(R.string.speech_add_report_title),
@@ -143,7 +144,7 @@ fun X9BottomBar(
             BottomNavItem(
                 icon = Icons.Default.Home,
                 label = stringResource(R.string.nav_home),
-                selected = currentRoute == "home",
+                selected = currentRoute == NavRoutes.HOME,
                 onClick = onHomeClick
             )
             BottomNavItem(
@@ -170,13 +171,13 @@ fun X9BottomBar(
             BottomNavItem(
                 icon = Icons.Default.Map,
                 label = stringResource(R.string.nav_map),
-                selected = currentRoute == "map",
+                selected = currentRoute == NavRoutes.MAP,
                 onClick = onMapClick
             )
             BottomNavItem(
                 icon = Icons.Default.Person,
                 label = stringResource(R.string.nav_profile),
-                selected = currentRoute == "profile",
+                selected = currentRoute == NavRoutes.PROFILE,
                 onClick = onProfileClick
             )
         }

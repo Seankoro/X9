@@ -25,6 +25,10 @@ import java.util.Locale
 
 class SpeechViewModel(application: Application) : AndroidViewModel(application) {
 
+    companion object {
+        private const val TAG = "SpeechViewModel"
+    }
+
     private val _uiState = MutableStateFlow<SpeechUiState>(SpeechUiState.Idle)
     val uiState: StateFlow<SpeechUiState> = _uiState.asStateFlow()
 
@@ -33,60 +37,14 @@ class SpeechViewModel(application: Application) : AndroidViewModel(application) 
 
     private var recognizer: SpeechRecognizer? = null
 
-    /** Returns true if the device supports speech recognition. */
-    fun isAvailable(): Boolean =
-        SpeechRecognizer.isRecognitionAvailable(getApplication())
-
-    /**
-     * Starts listening. Call only from the main thread (Activity/Composable click handler).
-     * Checks RECORD_AUDIO permission internally; emits Error state if not granted.
-     */
-    fun startListening() {
-        val context = getApplication<Application>()
-
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            _uiState.value = SpeechUiState.Error(
-                context.getString(R.string.error_mic_permission)
-            )
-            return
-        }
-
-        recognizer?.destroy()
-        recognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
-            setRecognitionListener(recognitionListener)
-        }
-
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.ENGLISH.toLanguageTag())
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-        }
-
-        recognizer?.startListening(intent)
-        _uiState.value = SpeechUiState.Listening
-    }
-
-    /** Cancels an in-progress recognition session and returns to Idle. */
-    fun cancel() {
-        recognizer?.cancel()
-        _uiState.value = SpeechUiState.Idle
-    }
-
-    override fun onCleared() {
-        recognizer?.destroy()
-        recognizer = null
-    }
-
     private val recognitionListener = object : RecognitionListener {
         override fun onResults(results: Bundle?) {
             val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-            Log.d("X9Speech", "raw matches: $matches")
+            Log.d(TAG, "raw matches: $matches")
             val utterance = matches?.firstOrNull().orEmpty()
-            Log.d("X9Speech", "utterance -> '$utterance'")
+            Log.d(TAG, "utterance -> '$utterance'")
             val result = SpeechParser.parse(utterance)
-            Log.d("X9Speech", "parsed -> type=${result.type}, severity=${result.severity}")
+            Log.d(TAG, "parsed -> type=${result.type}, severity=${result.severity}")
             if (result.isEmpty) {
                 _uiState.value = SpeechUiState.NoMatch
             } else {
@@ -117,5 +75,55 @@ class SpeechViewModel(application: Application) : AndroidViewModel(application) 
         override fun onEndOfSpeech() {}
         override fun onPartialResults(partialResults: Bundle?) {}
         override fun onEvent(eventType: Int, params: Bundle?) {}
+    }
+
+    init {
+        if (SpeechRecognizer.isRecognitionAvailable(getApplication())) {
+            recognizer = SpeechRecognizer.createSpeechRecognizer(getApplication()).apply {
+                setRecognitionListener(recognitionListener)
+            }
+        }
+    }
+
+    /** Returns true if the device supports speech recognition. */
+    fun isAvailable(): Boolean =
+        SpeechRecognizer.isRecognitionAvailable(getApplication())
+
+    /**
+     * Starts listening. Call only from the main thread (Activity/Composable click handler).
+     * Checks RECORD_AUDIO permission internally; emits Error state if not granted.
+     */
+    fun startListening() {
+        val context = getApplication<Application>()
+
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            _uiState.value = SpeechUiState.Error(
+                context.getString(R.string.error_mic_permission)
+            )
+            return
+        }
+
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.ENGLISH.toLanguageTag())
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+        }
+
+        recognizer?.cancel()
+        recognizer?.startListening(intent)
+        _uiState.value = SpeechUiState.Listening
+    }
+
+    /** Cancels an in-progress recognition session and returns to Idle. */
+    fun cancel() {
+        recognizer?.cancel()
+        _uiState.value = SpeechUiState.Idle
+    }
+
+    override fun onCleared() {
+        recognizer?.destroy()
+        recognizer = null
     }
 }

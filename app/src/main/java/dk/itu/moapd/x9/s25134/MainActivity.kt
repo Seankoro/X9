@@ -2,7 +2,6 @@ package dk.itu.moapd.x9.s25134
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -11,19 +10,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,8 +26,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import android.speech.SpeechRecognizer
 import dk.itu.moapd.x9.s25134.speech.SpeechUiState
+import dk.itu.moapd.x9.s25134.ui.components.PermissionOnboardingEffect
 import dk.itu.moapd.x9.s25134.ui.components.SpeechOverlay
 import dk.itu.moapd.x9.s25134.ui.components.X9BottomBar
 import dk.itu.moapd.x9.s25134.ui.screens.DashboardScreen
@@ -49,6 +42,7 @@ import dk.itu.moapd.x9.s25134.viewmodel.AuthViewModel
 import dk.itu.moapd.x9.s25134.viewmodel.MapViewModel
 import dk.itu.moapd.x9.s25134.viewmodel.ReportFormViewModel
 import dk.itu.moapd.x9.s25134.viewmodel.ReportListViewModel
+import dk.itu.moapd.x9.s25134.viewmodel.SettingsViewModel
 import dk.itu.moapd.x9.s25134.viewmodel.SpeechViewModel
 import kotlinx.coroutines.launch
 
@@ -56,13 +50,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
-
-        // Step values for the permission onboarding state machine.
-        private const val PERM_STEP_IDLE = 0
-        private const val PERM_STEP_NOTIFICATIONS = 1
-        private const val PERM_STEP_FINE_LOCATION = 2
-        private const val PERM_STEP_BACKGROUND_LOCATION = 3
-        private const val PERM_STEP_DONE = 4
     }
 
     private val viewModel: ReportListViewModel by viewModels()
@@ -70,12 +57,13 @@ class MainActivity : ComponentActivity() {
     private val mapViewModel: MapViewModel by viewModels()
     private val reportFormViewModel: ReportFormViewModel by viewModels()
     private val speechViewModel: SpeechViewModel by viewModels()
+    private val settingsViewModel: SettingsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate")
         setContent {
-            val isDarkModePreference by viewModel.isDarkMode.collectAsStateWithLifecycle()
+            val isDarkModePreference by settingsViewModel.isDarkMode.collectAsStateWithLifecycle()
             val reports by viewModel.reports.collectAsStateWithLifecycle()
             val isDarkMode = isDarkModePreference ?: isSystemInDarkTheme()
             val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
@@ -128,83 +116,6 @@ class MainActivity : ComponentActivity() {
                 else recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
 
-            val startDestination = "home"
-
-            // ---- Permission onboarding ----
-            // Three permissions are required for proximity alerts, each requested in sequence:
-            //   1. POST_NOTIFICATIONS (Android 13+)
-            //   2. ACCESS_FINE_LOCATION + ACCESS_COARSE_LOCATION (together, single dialog)
-            //   3. ACCESS_BACKGROUND_LOCATION (must be separate and after fine location)
-            // Each step shows a rationale AlertDialog before the system prompt so the user
-            // understands why the permission is needed and what to choose.
-            // The flow reruns on every launch — steps that are already granted are skipped
-            // automatically. Android's own "don't ask again" mechanism handles permanent denial.
-            var proximityPermStep by remember { mutableIntStateOf(PERM_STEP_IDLE) }
-            var showNotifRationale by remember { mutableStateOf(false) }
-            var showFineLocRationale by remember { mutableStateOf(false) }
-            var showBgLocRationale by remember { mutableStateOf(false) }
-
-            val notifPermLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { proximityPermStep = PERM_STEP_FINE_LOCATION }
-
-            // Fine + coarse must be requested together; Android shows a single
-            // "Precise / Approximate" dialog on API 31+.
-            val fineLocPermLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestMultiplePermissions()
-            ) { proximityPermStep = PERM_STEP_BACKGROUND_LOCATION }
-
-            val bgLocPermLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { proximityPermStep = PERM_STEP_DONE }
-
-            // On each launch, determine which step to start from.
-            LaunchedEffect(Unit) {
-                proximityPermStep = if (
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                    ContextCompat.checkSelfPermission(
-                        this@MainActivity, Manifest.permission.POST_NOTIFICATIONS
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) PERM_STEP_NOTIFICATIONS else PERM_STEP_FINE_LOCATION
-            }
-
-            // Advance through permission steps, showing a rationale dialog before each request.
-            LaunchedEffect(proximityPermStep) {
-                when (proximityPermStep) {
-                    PERM_STEP_NOTIFICATIONS -> showNotifRationale = true
-                    PERM_STEP_FINE_LOCATION -> {
-                        val fineGranted = ContextCompat.checkSelfPermission(
-                            this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION
-                        ) == PackageManager.PERMISSION_GRANTED
-                        if (fineGranted) proximityPermStep = PERM_STEP_BACKGROUND_LOCATION
-                        else showFineLocRationale = true
-                    }
-                    PERM_STEP_BACKGROUND_LOCATION -> {
-                        // ACCESS_BACKGROUND_LOCATION only exists on API 29+. On API 28 foreground
-                        // location implicitly grants background access — nothing to request.
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                            proximityPermStep = PERM_STEP_DONE
-                            return@LaunchedEffect
-                        }
-                        val fineGranted = ContextCompat.checkSelfPermission(
-                            this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION
-                        ) == PackageManager.PERMISSION_GRANTED
-                        val bgGranted = ContextCompat.checkSelfPermission(
-                            this@MainActivity, Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        ) == PackageManager.PERMISSION_GRANTED
-                        when {
-                            bgGranted -> proximityPermStep = PERM_STEP_DONE
-                            fineGranted -> showBgLocRationale = true
-                            // Fine location was denied — background location cannot be requested.
-                            else -> proximityPermStep = PERM_STEP_DONE
-                        }
-                    }
-                    PERM_STEP_DONE -> viewModel.syncGeofences()
-                }
-            }
-
-            // ---- End permission onboarding ----
-
             // SharedFlow collectors for one-shot events. Each runs in its own LaunchedEffect
             // so an error from one flow never blocks delivery from another.
             LaunchedEffect(Unit) {
@@ -235,21 +146,21 @@ class MainActivity : ComponentActivity() {
             val currentRouteState = androidx.compose.runtime.rememberUpdatedState(currentRoute)
             LaunchedEffect(Unit) {
                 speechViewModel.speechResult.collect { result ->
-                    if (currentRouteState.value == "add") {
+                    if (currentRouteState.value == NavRoutes.ADD) {
                         reportFormViewModel.preFill(result)
                     } else {
                         reportFormViewModel.reset()
                         reportFormViewModel.preFill(result)
-                        navController.navigate("add")
+                        navController.navigate(NavRoutes.ADD)
                     }
                 }
             }
 
             // Redirect to home automatically after a successful sign-in while on the login screen.
             LaunchedEffect(currentUser) {
-                if (currentUser != null && currentRoute == "login") {
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
+                if (currentUser != null && currentRoute == NavRoutes.LOGIN) {
+                    navController.navigate(NavRoutes.HOME) {
+                        popUpTo(NavRoutes.LOGIN) { inclusive = true }
                     }
                 }
             }
@@ -257,79 +168,7 @@ class MainActivity : ComponentActivity() {
             X9ComposeTheme(darkTheme = isDarkMode) {
                 // Rationale dialogs must live inside X9ComposeTheme so Material3 tokens
                 // (colors, typography, shapes) are available to AlertDialog.
-                if (showNotifRationale && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            showNotifRationale = false
-                            proximityPermStep = PERM_STEP_FINE_LOCATION
-                        },
-                        title = { Text(stringResource(R.string.perm_rationale_notif_title)) },
-                        text = { Text(stringResource(R.string.perm_rationale_notif_body)) },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                showNotifRationale = false
-                                notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                            }) { Text(stringResource(R.string.perm_rationale_continue)) }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = {
-                                showNotifRationale = false
-                                proximityPermStep = PERM_STEP_FINE_LOCATION
-                            }) { Text(stringResource(R.string.perm_rationale_not_now)) }
-                        }
-                    )
-                }
-
-                if (showFineLocRationale) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            showFineLocRationale = false
-                            proximityPermStep = PERM_STEP_BACKGROUND_LOCATION
-                        },
-                        title = { Text(stringResource(R.string.perm_rationale_fine_loc_title)) },
-                        text = { Text(stringResource(R.string.perm_rationale_fine_loc_body)) },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                showFineLocRationale = false
-                                fineLocPermLauncher.launch(
-                                    arrayOf(
-                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                        Manifest.permission.ACCESS_COARSE_LOCATION
-                                    )
-                                )
-                            }) { Text(stringResource(R.string.perm_rationale_continue)) }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = {
-                                showFineLocRationale = false
-                                proximityPermStep = PERM_STEP_BACKGROUND_LOCATION
-                            }) { Text(stringResource(R.string.perm_rationale_not_now)) }
-                        }
-                    )
-                }
-
-                if (showBgLocRationale) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            showBgLocRationale = false
-                            proximityPermStep = PERM_STEP_DONE
-                        },
-                        title = { Text(stringResource(R.string.perm_rationale_bg_loc_title)) },
-                        text = { Text(stringResource(R.string.perm_rationale_bg_loc_body)) },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                showBgLocRationale = false
-                                bgLocPermLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                            }) { Text(stringResource(R.string.perm_rationale_continue)) }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = {
-                                showBgLocRationale = false
-                                proximityPermStep = PERM_STEP_DONE
-                            }) { Text(stringResource(R.string.perm_rationale_not_now)) }
-                        }
-                    )
-                }
+                PermissionOnboardingEffect(onPermissionsReady = { viewModel.syncGeofences() })
 
                 if (showSpeechOverlay) {
                     SpeechOverlay(
@@ -342,15 +181,15 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     bottomBar = {
-                        if (currentRoute != "login") {
+                        if (currentRoute != NavRoutes.LOGIN) {
                             X9BottomBar(
                                 currentRoute = currentRoute,
                                 onHomeClick = {
-                                    navController.popBackStack("home", inclusive = false)
+                                    navController.popBackStack(NavRoutes.HOME, inclusive = false)
                                 },
                                 onReportsClick = {
-                                    navController.navigate("reports") {
-                                        popUpTo("home") { saveState = true }
+                                    navController.navigate(NavRoutes.REPORTS) {
+                                        popUpTo(NavRoutes.HOME) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
                                     }
@@ -358,7 +197,7 @@ class MainActivity : ComponentActivity() {
                                 onAddClick = {
                                     if (currentUser != null) {
                                         reportFormViewModel.reset()
-                                        navController.navigate("add")
+                                        navController.navigate(NavRoutes.ADD)
                                     } else {
                                         scope.launch {
                                             snackbarHostState.showSnackbar(signInRequiredText)
@@ -368,15 +207,15 @@ class MainActivity : ComponentActivity() {
                                 onVoiceClick = { onVoiceClick() },
                                 speechAvailable = isSpeechAvailable,
                                 onMapClick = {
-                                    navController.navigate("map") {
-                                        popUpTo("home") { saveState = true }
+                                    navController.navigate(NavRoutes.MAP) {
+                                        popUpTo(NavRoutes.HOME) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
                                     }
                                 },
                                 onProfileClick = {
-                                    navController.navigate("profile") {
-                                        popUpTo("home") { saveState = true }
+                                    navController.navigate(NavRoutes.PROFILE) {
+                                        popUpTo(NavRoutes.HOME) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
                                     }
@@ -387,9 +226,9 @@ class MainActivity : ComponentActivity() {
                 ) { paddingValues ->
                     NavHost(
                         navController = navController,
-                        startDestination = startDestination
+                        startDestination = NavRoutes.HOME
                     ) {
-                        composable("login") {
+                        composable(NavRoutes.LOGIN) {
                             val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
                             LoginScreen(
                                 isLoading = isLoading,
@@ -400,42 +239,42 @@ class MainActivity : ComponentActivity() {
                                 paddingValues = paddingValues
                             )
                         }
-                        composable("home") {
+                        composable(NavRoutes.HOME) {
                             DashboardScreen(
                                 reports = reports,
                                 currentUser = currentUser,
                                 onNavigateToAdd = {
                                     if (currentUser != null) {
                                         reportFormViewModel.reset()
-                                        navController.navigate("add")
+                                        navController.navigate(NavRoutes.ADD)
                                     } else {
                                         scope.launch { snackbarHostState.showSnackbar(signInRequiredText) }
                                     }
                                 },
                                 onNavigateToMap = {
-                                    navController.navigate("map") {
-                                        popUpTo("home") { saveState = true }
+                                    navController.navigate(NavRoutes.MAP) {
+                                        popUpTo(NavRoutes.HOME) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
                                     }
                                 },
                                 onNavigateToReports = {
-                                    navController.navigate("reports") {
-                                        popUpTo("home") { saveState = true }
+                                    navController.navigate(NavRoutes.REPORTS) {
+                                        popUpTo(NavRoutes.HOME) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
                                     }
                                 },
                                 onNavigateToCriticalReports = {
-                                    navController.navigate("reports?criticalOnly=true")
+                                    navController.navigate(NavRoutes.reports(criticalOnly = true))
                                 },
                                 onNavigateToMyReports = {
-                                    navController.navigate("reports?myReportsOnly=true")
+                                    navController.navigate(NavRoutes.reports(myReportsOnly = true))
                                 },
-                                onNavigateToDetail = { id -> navController.navigate("detail/$id") },
+                                onNavigateToDetail = { id -> navController.navigate(NavRoutes.detail(id)) },
                                 onNavigateToProfile = {
-                                    navController.navigate("profile") {
-                                        popUpTo("home") { saveState = true }
+                                    navController.navigate(NavRoutes.PROFILE) {
+                                        popUpTo(NavRoutes.HOME) { saveState = true }
                                         launchSingleTop = true
                                         restoreState = true
                                     }
@@ -444,7 +283,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable(
-                            route = "reports?myReportsOnly={myReportsOnly}&criticalOnly={criticalOnly}",
+                            route = NavRoutes.REPORTS_ROUTE,
                             arguments = listOf(
                                 navArgument("myReportsOnly") { type = NavType.BoolType; defaultValue = false },
                                 navArgument("criticalOnly") { type = NavType.BoolType; defaultValue = false }
@@ -453,21 +292,21 @@ class MainActivity : ComponentActivity() {
                             ReportListScreen(
                                 reports = reports,
                                 currentUser = currentUser,
-                                onNavigateToDetail = { id -> navController.navigate("detail/$id") },
-                                onNavigateToEdit = { id -> navController.navigate("edit/$id") },
+                                onNavigateToDetail = { id -> navController.navigate(NavRoutes.detail(id)) },
+                                onNavigateToEdit = { id -> navController.navigate(NavRoutes.edit(id)) },
                                 onDeleteReport = { viewModel.deleteReport(it, currentUser?.uid) },
                                 initialMyReportsOnly = back.arguments?.getBoolean("myReportsOnly") ?: false,
                                 initialCriticalOnly = back.arguments?.getBoolean("criticalOnly") ?: false,
                                 paddingValues = paddingValues
                             )
                         }
-                        composable("add") {
+                        composable(NavRoutes.ADD) {
                             // Self-protecting auth guard: redirect to log in regardless of how
                             // this destination is reached (deep link, back stack, etc.).
                             if (currentUser == null) {
                                 LaunchedEffect(Unit) {
-                                    navController.navigate("login") {
-                                        popUpTo("add") { inclusive = true }
+                                    navController.navigate(NavRoutes.LOGIN) {
+                                        popUpTo(NavRoutes.ADD) { inclusive = true }
                                     }
                                 }
                                 return@composable
@@ -494,21 +333,21 @@ class MainActivity : ComponentActivity() {
                                 paddingValues = paddingValues
                             )
                         }
-                        composable("detail/{reportId}") { back ->
+                        composable(NavRoutes.DETAIL_ROUTE) { back ->
                             val reportId = back.arguments?.getString("reportId") ?: return@composable
                             ReportDetailScreen(
                                 reportId = reportId,
                                 reports = reports,
                                 currentUser = currentUser,
                                 onBack = { navController.popBackStack() },
-                                onEdit = { id -> navController.navigate("edit/$id") },
+                                onEdit = { id -> navController.navigate(NavRoutes.edit(id)) },
                                 onDelete = { id ->
                                     viewModel.deleteReport(id, currentUser?.uid)
                                 },
                                 paddingValues = paddingValues
                             )
                         }
-                        composable("edit/{reportId}") { back ->
+                        composable(NavRoutes.EDIT_ROUTE) { back ->
                             val reportId = back.arguments?.getString("reportId") ?: return@composable
                             LaunchedEffect(reportId) {
                                 reportFormViewModel.reset()
@@ -539,26 +378,26 @@ class MainActivity : ComponentActivity() {
                                 paddingValues = paddingValues
                             )
                         }
-                        composable("map") {
+                        composable(NavRoutes.MAP) {
                             MapScreen(
                                 reports = reports,
                                 userLocation = userLocation,
                                 mapType = mapType,
                                 onMapTypeChange = { mapViewModel.setMapType(it) },
                                 onLoadUserLocation = { mapViewModel.loadUserLocation() },
-                                onNavigateToDetail = { id -> navController.navigate("detail/$id") },
+                                onNavigateToDetail = { id -> navController.navigate(NavRoutes.detail(id)) },
                                 paddingValues = paddingValues
                             )
                         }
-                        composable("profile") {
+                        composable(NavRoutes.PROFILE) {
                             ProfileScreen(
                                 currentUser = currentUser,
                                 isDarkMode = isDarkMode,
-                                onToggleDarkMode = { viewModel.setDarkMode(!isDarkMode) },
-                                onNavigateToLogin = { navController.navigate("login") },
+                                onToggleDarkMode = { settingsViewModel.setDarkMode(!isDarkMode) },
+                                onNavigateToLogin = { navController.navigate(NavRoutes.LOGIN) },
                                 onSignOut = {
                                     authViewModel.signOut()
-                                    navController.navigate("home") {
+                                    navController.navigate(NavRoutes.HOME) {
                                         popUpTo(0) { inclusive = true }
                                     }
                                 },

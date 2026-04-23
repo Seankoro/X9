@@ -1,71 +1,36 @@
 package dk.itu.moapd.x9.s25134.viewmodel
 
 import android.app.Application
-import android.content.Context
 import android.util.Log
-import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.X9Application
 import dk.itu.moapd.x9.s25134.model.TrafficReport
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Owns the live list of reports and app-wide UI settings (dark mode).
- *
- * Uses [AndroidViewModel] to access Application context for SharedPreferences and
- * string resources without leaking an Activity reference.
- *
- * [reports] is a [StateFlow] forwarded directly from ReportRepository, consistent with
- * the rest of the StateFlow-based state in the app.
- */
 class ReportListViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {
         private const val TAG = "ReportListViewModel"
-        const val PREFS_NAME = "x9_prefs"
-        const val KEY_DARK_MODE = "dark_mode"
-    }
-
-    private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-    // null = no user preference saved yet; MainActivity will fall back to isSystemInDarkTheme().
-    // Boolean = user has explicitly toggled; their choice overrides the system setting.
-    private val _isDarkMode: MutableStateFlow<Boolean?> = MutableStateFlow(
-        if (prefs.contains(KEY_DARK_MODE)) prefs.getBoolean(KEY_DARK_MODE, false) else null
-    )
-    val isDarkMode: StateFlow<Boolean?> = _isDarkMode.asStateFlow()
-
-    fun setDarkMode(enabled: Boolean) {
-        Log.d(TAG, "Dark mode set to $enabled")
-        _isDarkMode.value = enabled
-        prefs.edit { putBoolean(KEY_DARK_MODE, enabled) }
     }
 
     private val repository = getApplication<X9Application>().reportRepository
 
     val reports: StateFlow<List<TrafficReport>> = repository.reports
 
-    // Unified error channel: merges database errors from the repository with
-    // authorization rule violations enforced here in the ViewModel.
     private val _error = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val error: SharedFlow<String> = _error.asSharedFlow()
 
     init {
         repository.startListening()
-        // Forward database errors through the ViewModel's unified error channel.
         viewModelScope.launch {
             repository.dbError.collect { emitError(it) }
         }
-        // Keep registered geofences in sync with the live report list. Each emission
-        // from Firebase (add, update, delete) triggers a diff in GeofenceRepository.
         viewModelScope.launch {
             repository.reports.collect { updatedReports ->
                 getApplication<X9Application>().geofenceRepository.sync(updatedReports)
@@ -85,9 +50,7 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun deleteReport(id: String, currentUserId: String?) {
-        // Report must be a valid report in DB and only creators can delete their own report
         val report = reports.value.find { it.id == id }
-        // Block if the report is not in local cache or the caller is not the creator.
         if (report == null || report.creatorId != currentUserId) {
             emitError(getApplication<Application>().getString(R.string.error_not_owner_delete))
             return

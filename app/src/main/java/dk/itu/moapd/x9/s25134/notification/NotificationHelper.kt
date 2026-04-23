@@ -9,7 +9,18 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import dk.itu.moapd.x9.s25134.MainActivity
 import dk.itu.moapd.x9.s25134.R
+import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
+
+private fun Severity.displayName(context: Context): String = context.getString(
+    when (this) {
+        Severity.MINOR    -> R.string.severity_label_minor
+        Severity.LOW      -> R.string.severity_label_low
+        Severity.MODERATE -> R.string.severity_label_moderate
+        Severity.HIGH     -> R.string.severity_label_high
+        Severity.CRITICAL -> R.string.severity_label_critical
+    }
+)
 
 /**
  * Utility for creating the proximity notification channel and posting individual
@@ -58,7 +69,7 @@ object NotificationHelper {
         val body = report.locationName.takeIf { it.isNotBlank() } ?: report.description
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(context.getString(R.string.notif_proximity_title, report.severity.name, report.type))
+            .setContentTitle(context.getString(R.string.notif_proximity_title, report.severity.displayName(context), report.type))
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)

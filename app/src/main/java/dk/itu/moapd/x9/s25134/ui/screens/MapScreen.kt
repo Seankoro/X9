@@ -9,6 +9,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -82,9 +83,14 @@ import dk.itu.moapd.x9.s25134.ui.components.SeverityBadge
 import dk.itu.moapd.x9.s25134.ui.components.typeEmoji
 import kotlin.math.roundToInt
 
+// Google Maps screen showing traffic reports as clustered markers.
+// Tapping a cluster or a stacked pin opens a bottom sheet (single card or swipeable pager).
+// Manages its own location permission lifecycle — requests on first open, re-checks on resume.
 private val DEFAULT_POSITION = LatLng(55.676098, 12.568337) // Copenhagen city center
 
 private class ReportClusterItem(val report: TrafficReport) : ClusterItem {
+    // ?: 0.0 is a defensive fallback — clusterItems always filters for non-null coordinates
+    // before constructing ReportClusterItems, so (0.0, 0.0) is never reached in practice.
     override fun getPosition(): LatLng = LatLng(report.latitude ?: 0.0, report.longitude ?: 0.0)
     override fun getTitle(): String = report.type
     override fun getSnippet(): String = report.description.take(60)
@@ -94,7 +100,7 @@ private class ReportClusterItem(val report: TrafficReport) : ClusterItem {
 private fun formatDistance(report: TrafficReport, userLocation: LatLng?, context: Context): String? {
     if (userLocation == null || report.latitude == null || report.longitude == null) return null
     val results = FloatArray(1)
-    android.location.Location.distanceBetween(
+    Location.distanceBetween(
         userLocation.latitude, userLocation.longitude,
         report.latitude, report.longitude,
         results
@@ -128,6 +134,8 @@ fun MapScreen(
         )
     }
 
+    // Re-check permission on every ON_RESUME so that if the user leaves to grant
+    // permission in system Settings and then returns, the map reacts immediately.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -174,8 +182,13 @@ fun MapScreen(
     }
 
     val cameraPositionState = rememberCameraPositionState()
+    // hasCameraInitialized prevents re-animating back to the user's position after they
+    // have manually moved the camera. Without it, any userLocation update would snap
+    // the camera away from wherever the user was panning.
     var hasCameraInitialized by remember { mutableStateOf(false) }
 
+    // Animate to the user's location when it first arrives, or to Copenhagen as a
+    // fallback if location is unavailable and the camera has not been set yet.
     LaunchedEffect(userLocation) {
         if (userLocation != null) {
             cameraPositionState.animate(

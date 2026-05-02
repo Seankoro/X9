@@ -48,6 +48,7 @@ import dk.itu.moapd.x9.s25134.ui.components.userInitials
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 import java.util.Calendar
 
+// Function to get the greeting message based on current time
 @Composable
 private fun timeGreeting(): String {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)

@@ -32,7 +32,7 @@ class GeocodingRepository {
         private const val TAG = "GeocodingRepository"
         private const val BASE_URL = "https://geocode.maps.co/"
 
-        // Retrofit instance is process-scoped via companion object — one HTTP client shared by all callers.
+        // Retrofit instance is process-scoped via companion object, one HTTP client shared by all callers.
         private val service: GeocodingService = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())

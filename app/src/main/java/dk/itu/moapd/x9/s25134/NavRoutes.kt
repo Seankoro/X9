@@ -1,5 +1,6 @@
 package dk.itu.moapd.x9.s25134
 
+// Route constants for navigation, easily extensible by adding new routes here.
 object NavRoutes {
     const val LOGIN = "login"
     const val HOME = "home"

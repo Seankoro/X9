@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
 
+// Repository layer to abstract the operations with Firebase Auth.
+// Rest of application will interact with Firebase Auth through this repository
 class AuthRepository {
 
     companion object {

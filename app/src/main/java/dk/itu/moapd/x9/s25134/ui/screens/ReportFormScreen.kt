@@ -3,6 +3,7 @@ package dk.itu.moapd.x9.s25134.ui.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,6 +67,8 @@ import kotlin.math.roundToInt
 
 private const val TAG = "ReportFormScreen"
 
+// Unified form for creating and editing traffic reports.
+// reportId == null → new report; reportId != null → edit mode (pre-loads existing data).
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportFormScreen(
@@ -95,6 +98,8 @@ fun ReportFormScreen(
     val isEditMode = existingReport != null
 
     var expanded by remember { mutableStateOf(false) }
+    // rememberSaveable keyed on reportId so form state resets when navigating between reports
+    // or switching from edit mode back to new-report mode.
     var selectedType by rememberSaveable(reportId) { mutableStateOf(existingReport?.type ?: trafficTypes[0]) }
     var description by rememberSaveable(reportId) { mutableStateOf(existingReport?.description ?: "") }
     var severityFloat by rememberSaveable(reportId) {
@@ -102,9 +107,14 @@ fun ReportFormScreen(
     }
 
     val severity: Severity = Severity.entries[severityFloat.roundToInt() - 1]
+    // hasInput defines what "dirty" means for the discard confirmation — a form with only
+    // type/severity/location changes but no description or image is treated as empty.
     val hasInput = description.isNotBlank() || selectedImageUri != null
 
     LaunchedEffect(preFillType, preFillSeverity) {
+        if (preFillType != null || preFillSeverity != null) {
+            Log.d(TAG, "speech pre-fill: type=$preFillType, severity=$preFillSeverity")
+        }
         if (preFillType != null) selectedType = preFillType
         if (preFillSeverity != null) severityFloat = preFillSeverity.level.toFloat()
         if (preFillType != null || preFillSeverity != null) onPreFillConsumed()
@@ -118,6 +128,7 @@ fun ReportFormScreen(
 
     // On form open: request location for new reports
     LaunchedEffect(reportId) {
+        Log.d(TAG, if (isEditMode) "edit mode: reportId=$reportId" else "new report mode")
         if (existingReport == null) {
             val hasPermission = ContextCompat.checkSelfPermission(
                 context, Manifest.permission.ACCESS_FINE_LOCATION
@@ -228,6 +239,8 @@ fun ReportFormScreen(
                         Severity.CRITICAL -> R.color.severity_critical
                     }
                 )
+                // steps = 3 means 3 intermediate ticks, giving 5 total positions (1–5).
+                // Compose counts steps between endpoints, not total positions.
                 Slider(
                     value = severityFloat,
                     onValueChange = { severityFloat = it },
@@ -287,10 +300,12 @@ fun ReportFormScreen(
 
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_large)))
 
-                // Submit button
+                // Submit button — new reports require location coordinates; edit mode does not
+                // since the location was already captured at creation time.
                 val submitEnabled = isEditMode || (locationLat != null && locationLng != null)
                 Button(
                     onClick = {
+                        Log.d(TAG, "submit: type=$selectedType, severity=$severity, editMode=$isEditMode")
                         val trimmed = description.trim()
                         if (reportId == null) {
                             onSubmit(

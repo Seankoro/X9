@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+// Viewmodel for report creation form screen, manages the states in the report creation workflow
 class ReportFormViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {

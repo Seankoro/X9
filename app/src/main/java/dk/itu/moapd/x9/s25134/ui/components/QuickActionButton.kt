@@ -19,6 +19,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import dk.itu.moapd.x9.s25134.R
 
+// Quick actions button used in the dashboard for shortcuts
 @Composable
 fun QuickActionButton(
     icon: ImageVector,

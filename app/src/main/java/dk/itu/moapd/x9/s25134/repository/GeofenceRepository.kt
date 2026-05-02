@@ -24,18 +24,18 @@ import dk.itu.moapd.x9.s25134.model.TrafficReport
  * An eligible report must have [Severity.HIGH] or [Severity.CRITICAL] severity and
  * non-null coordinates. The proximity radius is fixed at 500m.
  *
- * Must be called from the main thread — GeofencingClient requires a Looper.
+ * Must be called from the main thread.
  */
 class GeofenceRepository(private val context: Context) {
 
     companion object {
         private const val TAG = "GeofenceRepository"
-        private const val RADIUS_METERS = 500f
+        private const val RADIUS_METERS = 500f // Geofence radius set to 500m
     }
 
     private val geofencingClient = LocationServices.getGeofencingClient(context)
 
-    /** IDs of geofences currently registered with the system. */
+    // IDs of geofences currently registered with the system.
     private val registeredIds = mutableSetOf<String>()
 
     private val pendingIntent: PendingIntent by lazy {
@@ -69,6 +69,7 @@ class GeofenceRepository(private val context: Context) {
         val toRemove = registeredIds - eligibleIds
         val toAdd = eligible.filter { it.id !in registeredIds }
 
+        // Remove geofences for reports that are no longer eligible
         if (toRemove.isNotEmpty()) {
             registeredIds -= toRemove
             geofencingClient.removeGeofences(toRemove.toList())
@@ -83,6 +84,7 @@ class GeofenceRepository(private val context: Context) {
 
         if (toAdd.isEmpty()) return
 
+        // Add Geofences for reports that are eligible but not yet registered
         val geofences = toAdd.map { report ->
             Geofence.Builder()
                 .setRequestId(report.id)

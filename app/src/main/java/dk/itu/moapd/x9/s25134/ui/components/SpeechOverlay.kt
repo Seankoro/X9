@@ -35,6 +35,11 @@ import androidx.compose.ui.unit.dp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.speech.SpeechUiState
 
+// Overlay for speech recognition workflow, renders according to 1 of 3 states in SpeechUiState.
+// listening - pulsing mic icon
+// NoMatch - muted mic icon, text and retry button
+// Error - error icon, the error message string and retry button
+// Idle - the state should not be showing
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpeechOverlay(
@@ -48,6 +53,7 @@ fun SpeechOverlay(
         onDismissRequest = onDismiss,
         sheetState = sheetState
     ) {
+        val iconSize = 64.dp
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -57,6 +63,7 @@ fun SpeechOverlay(
             verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_medium))
         ) {
             when (uiState) {
+                // Listening state
                 is SpeechUiState.Listening -> {
                     val infiniteTransition = rememberInfiniteTransition(label = "mic_pulse")
                     val scale by infiniteTransition.animateFloat(
@@ -71,7 +78,7 @@ fun SpeechOverlay(
                     Icon(
                         imageVector = Icons.Default.Mic,
                         contentDescription = null,
-                        modifier = Modifier.size(64.dp).scale(scale),
+                        modifier = Modifier.size(iconSize).scale(scale),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Text(
@@ -79,11 +86,13 @@ fun SpeechOverlay(
                         style = MaterialTheme.typography.titleMedium
                     )
                 }
+
+                // NoMatch state
                 is SpeechUiState.NoMatch -> {
                     Icon(
                         imageVector = Icons.Default.MicOff,
                         contentDescription = null,
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier.size(iconSize),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
@@ -95,11 +104,13 @@ fun SpeechOverlay(
                         Text(stringResource(R.string.speech_retry))
                     }
                 }
+
+                // Error state
                 is SpeechUiState.Error -> {
                     Icon(
                         imageVector = Icons.Default.ErrorOutline,
                         contentDescription = null,
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier.size(iconSize),
                         tint = MaterialTheme.colorScheme.error
                     )
                     Text(
@@ -111,7 +122,9 @@ fun SpeechOverlay(
                         Text(stringResource(R.string.speech_retry))
                     }
                 }
-                else -> {} // Idle — overlay should not be shown in this state
+
+                // Idle state, overlay should not be visible in this state
+                is SpeechUiState.Idle -> {}
             }
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
         }

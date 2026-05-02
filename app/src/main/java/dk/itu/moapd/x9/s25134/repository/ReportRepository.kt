@@ -22,6 +22,9 @@ import java.time.Instant
  * Maintains a persistent [ValueEventListener] while active so the local [reports]
  * StateFlow stays in sync with remote changes in real time.
  *
+ * Rest of application will interact with Firebase Realtime Database through the
+ * repository layer.
+ *
  * Call [startListening] when the ViewModel is ready and [stopListening] in [onCleared]
  * to avoid memory leaks.
  */
@@ -41,6 +44,7 @@ class ReportRepository {
     val dbError: SharedFlow<String> = _dbError.asSharedFlow()
 
     private val listener = object : ValueEventListener {
+        // EventListener to update the local reports StateFlow when Database changes
         override fun onDataChange(snapshot: DataSnapshot) {
             val list = snapshot.children.mapNotNull { it.toTrafficReport() }
             _reports.value = list.sortedByDescending { it.createdAt }

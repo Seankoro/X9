@@ -13,14 +13,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
+// Central data hub for report data: streams the live Firestore list, keeps geofences
+// in sync with report changes, and handles ownership-guarded deletion.
 class ReportListViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {
         private const val TAG = "ReportListViewModel"
     }
 
+    // Both repositories are obtained from X9Application rather than constructed here so
+    // that the same app-scoped instances are shared across all ViewModels.
     private val repository = getApplication<X9Application>().reportRepository
+    private val geofenceRepository = getApplication<X9Application>().geofenceRepository
 
+    // Report list is owned by the repository (Firestore listener lives there).
+    // The ViewModel exposes it directly rather than copying into a new StateFlow.
     val reports: StateFlow<List<TrafficReport>> = repository.reports
 
     private val _error = MutableSharedFlow<String>(extraBufferCapacity = 1)
@@ -28,12 +35,13 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
 
     init {
         repository.startListening()
+        // Two separate coroutines so a slow or failing collector cannot block the other.
         viewModelScope.launch {
             repository.dbError.collect { emitError(it) }
         }
         viewModelScope.launch {
             repository.reports.collect { updatedReports ->
-                getApplication<X9Application>().geofenceRepository.sync(updatedReports)
+                geofenceRepository.sync(updatedReports)
             }
         }
         Log.d(TAG, "ViewModel initialised — listening for reports")
@@ -45,8 +53,10 @@ class ReportListViewModel(application: Application) : AndroidViewModel(applicati
         Log.d(TAG, "ViewModel cleared — listener detached")
     }
 
+    // Called by PermissionOnboardingEffect once location permissions are granted,
+    // triggering an immediate geofence registration pass against the current report list.
     fun syncGeofences() {
-        getApplication<X9Application>().geofenceRepository.sync(reports.value)
+        geofenceRepository.sync(reports.value)
     }
 
     fun deleteReport(id: String, currentUserId: String?) {

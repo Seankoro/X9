@@ -47,6 +47,9 @@ import dk.itu.moapd.x9.s25134.NavRoutes
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 
+// The bottom navigation bar used throughout every screen in X9 except log in
+// 5 options: Home, Reports, Add reports, Map, Profile
+// The screen that the user is currently on will be highlighted
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun X9BottomBar(
@@ -59,6 +62,8 @@ fun X9BottomBar(
     onProfileClick: () -> Unit,
     speechAvailable: Boolean = true
 ) {
+    // Detail and edit screens are children of the reports flow, so the Reports tab
+    // stays highlighted while the user is viewing or editing a specific report.
     val isReportsActive = (currentRoute == NavRoutes.REPORTS || currentRoute?.startsWith("${NavRoutes.REPORTS}?") == true) ||
         currentRoute == NavRoutes.DETAIL_ROUTE ||
         currentRoute == NavRoutes.EDIT_ROUTE
@@ -67,40 +72,48 @@ fun X9BottomBar(
     val addSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
+    // Tapping the centre FAB shows a choice sheet instead of navigating directly,
+    // so the user can pick between voice input and manual text entry.
     if (showAddSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAddSheet = false },
             sheetState = addSheetState
         ) {
+            val sheetIconSize = 20.dp
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = dimensionResource(R.dimen.spacing_large), vertical = dimensionResource(R.dimen.spacing_small))
+                    .padding(
+                        horizontal = dimensionResource(R.dimen.spacing_large),
+                        vertical = dimensionResource(R.dimen.spacing_small)
+                    )
                     .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_small))
             ) {
                 Text(
                     text = stringResource(R.string.speech_add_report_title),
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = dimensionResource(R.dimen.spacing_small))
                 )
                 if (speechAvailable) {
                     TextButton(
                         onClick = {
+                            // hide() must complete before invoking the callback — prevents
+                            // two bottom sheets animating simultaneously on screen.
                             scope.launch {
                                 addSheetState.hide()
                                 showAddSheet = false
+                                onVoiceClick()
                             }
-                            onVoiceClick()
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
                             imageVector = Icons.Default.Mic,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(sheetIconSize)
                         )
-                        Spacer(modifier = Modifier.size(8.dp))
+                        Spacer(modifier = Modifier.size(dimensionResource(R.dimen.spacing_small)))
                         Text(stringResource(R.string.speech_use_voice))
                     }
                 }
@@ -109,20 +122,20 @@ fun X9BottomBar(
                         scope.launch {
                             addSheetState.hide()
                             showAddSheet = false
+                            onAddClick()
                         }
-                        onAddClick()
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(sheetIconSize)
                     )
-                    Spacer(modifier = Modifier.size(8.dp))
+                    Spacer(modifier = Modifier.size(dimensionResource(R.dimen.spacing_small)))
                     Text(stringResource(R.string.speech_type_manually))
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
             }
         }
     }
@@ -210,7 +223,7 @@ private fun BottomNavItem(
 private fun X9BottomBarPreview() {
     X9ComposeTheme(darkTheme = true) {
         X9BottomBar(
-            currentRoute = "home",
+            currentRoute = NavRoutes.HOME,
             onHomeClick = {}, onReportsClick = {}, onAddClick = {},
             onVoiceClick = {}, onMapClick = {}, onProfileClick = {}
         )

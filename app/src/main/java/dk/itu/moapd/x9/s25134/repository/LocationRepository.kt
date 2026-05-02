@@ -24,6 +24,7 @@ class LocationRepositoryImpl(private val context: Context) : LocationRepository 
     private val fusedLocationClient =
         LocationServices.getFusedLocationProviderClient(context)
 
+    // Explicit check for permissions
     override suspend fun getCurrentLocation(): LatLng? {
         val hasPermission =
             ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -36,6 +37,7 @@ class LocationRepositoryImpl(private val context: Context) : LocationRepository 
             return null
         }
 
+        // Return the device's current location when called
         return try {
             val location = fusedLocationClient.getCurrentLocation(
                 Priority.PRIORITY_HIGH_ACCURACY,

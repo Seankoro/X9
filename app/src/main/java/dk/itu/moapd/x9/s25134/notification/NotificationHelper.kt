@@ -1,17 +1,21 @@
 package dk.itu.moapd.x9.s25134.notification
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import dk.itu.moapd.x9.s25134.MainActivity
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.model.Severity
 import dk.itu.moapd.x9.s25134.model.TrafficReport
 
+// Utility to get display name for different severity levels, using resource system
 private fun Severity.displayName(context: Context): String = context.getString(
     when (this) {
         Severity.MINOR    -> R.string.severity_label_minor
@@ -66,15 +70,24 @@ object NotificationHelper {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        // Build the contents of notification body
         val body = report.locationName.takeIf { it.isNotBlank() } ?: report.description
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_traffic_alert)
             .setContentTitle(context.getString(R.string.notif_proximity_title, report.severity.displayName(context), report.type))
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
-        NotificationManagerCompat.from(context).notify(report.id.hashCode(), notification)
+
+        // Explicitly checking notifications permissions
+        val notifManager = NotificationManagerCompat.from(context)
+        if (notifManager.areNotificationsEnabled() &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) {
+            notifManager.notify(report.id.hashCode(), notification)
+        }
     }
 }

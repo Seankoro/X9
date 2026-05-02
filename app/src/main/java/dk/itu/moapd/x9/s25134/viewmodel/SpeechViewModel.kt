@@ -23,6 +23,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
 
+// Manages the Android SpeechRecognizer lifecycle and bridges raw recognition events
+// into domain types. Exposes two flows with different contracts:
+//   - uiState (StateFlow): persistent overlay state, always has a value
+//   - speechResult (SharedFlow): one-shot event emitted only on a successful parse
 class SpeechViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {
@@ -35,6 +39,8 @@ class SpeechViewModel(application: Application) : AndroidViewModel(application) 
     private val _speechResult = MutableSharedFlow<SpeechResult>(extraBufferCapacity = 1)
     val speechResult: SharedFlow<SpeechResult> = _speechResult.asSharedFlow()
 
+    // Nullable because not all devices support speech recognition. Callers check
+    // isAvailable() before showing UI that would trigger startListening().
     private var recognizer: SpeechRecognizer? = null
 
     private val recognitionListener = object : RecognitionListener {
@@ -48,6 +54,8 @@ class SpeechViewModel(application: Application) : AndroidViewModel(application) 
             if (result.isEmpty) {
                 _uiState.value = SpeechUiState.NoMatch
             } else {
+                // Return to Idle before emitting so the overlay dismisses before
+                // the form pre-fill navigates the user to the add screen.
                 _uiState.value = SpeechUiState.Idle
                 _speechResult.tryEmit(result)
             }
@@ -55,6 +63,9 @@ class SpeechViewModel(application: Application) : AndroidViewModel(application) 
 
         override fun onError(error: Int) {
             val context = getApplication<Application>()
+            // ERROR_NO_MATCH means the engine heard speech but couldn't match it —
+            // treated as a soft NoMatch rather than a hard Error so the user gets
+            // a retry prompt instead of a failure message.
             if (error == SpeechRecognizer.ERROR_NO_MATCH) {
                 _uiState.value = SpeechUiState.NoMatch
                 return
@@ -68,6 +79,8 @@ class SpeechViewModel(application: Application) : AndroidViewModel(application) 
             _uiState.value = SpeechUiState.Error(message)
         }
 
+        // Empty implementations are required by RecognitionListener; none of these
+        // events are relevant to the app's speech flow.
         override fun onReadyForSpeech(params: Bundle?) {}
         override fun onBeginningOfSpeech() {}
         override fun onRmsChanged(rmsdB: Float) {}
@@ -107,10 +120,13 @@ class SpeechViewModel(application: Application) : AndroidViewModel(application) 
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            // Hardcoded to English — SpeechParser's keyword list is English-only.
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.ENGLISH.toLanguageTag())
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
         }
 
+        // Cancel any in-progress session before starting a new one, guarding
+        // against the user tapping the mic button in rapid succession.
         recognizer?.cancel()
         recognizer?.startListening(intent)
         _uiState.value = SpeechUiState.Listening
@@ -123,6 +139,7 @@ class SpeechViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     override fun onCleared() {
+        super.onCleared()
         recognizer?.destroy()
         recognizer = null
     }

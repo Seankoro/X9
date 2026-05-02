@@ -58,6 +58,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+// Screen to show detailed report information, every report card leads to this screen
 @Composable
 fun ReportDetailScreen(
     reportId: String,
@@ -86,6 +87,7 @@ fun ReportDetailScreen(
     }
 
     if (showDeleteDialog.value) {
+        // Alert to ask users for delete confirmation
         AlertDialog(
             onDismissRequest = { showDeleteDialog.value = false },
             title = { Text(stringResource(R.string.dialog_delete_title)) },
@@ -190,17 +192,18 @@ fun ReportDetailScreen(
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xs)))
 
                 // AsyncImage handles downloading, decoding, and caching via Coil.
+                // ContentScale.Fit preserves the original aspect ratio so portrait and landscape
+                // photos display without cropping or distortion.
                 // The placeholder shows a loading indicator while the image fetches;
                 // the error parameter prevents a blank box on network failure.
                 AsyncImage(
                     model = report.imageUrl,
                     contentDescription = stringResource(R.string.cd_report_photo),
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     placeholder = painterResource(android.R.drawable.ic_menu_gallery),
                     error = painterResource(android.R.drawable.ic_menu_report_image),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(dimensionResource(R.dimen.map_embed_height))
                         .clip(RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)))
                 )
             }

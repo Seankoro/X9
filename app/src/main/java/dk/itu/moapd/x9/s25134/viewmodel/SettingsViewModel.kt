@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+// View model to save the user's dark mode preferences.
+// Extensible with other preferences in the future.
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {

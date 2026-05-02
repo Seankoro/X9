@@ -48,6 +48,7 @@ import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
 import dk.itu.moapd.x9.s25134.ui.components.TrafficReportCard
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 
+// Screen to show the list of report cards with the relevant filters
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportListScreen(
@@ -71,6 +72,7 @@ fun ReportListScreen(
     var searchQuery by remember { mutableStateOf("") }
     val reportToDelete = remember { mutableStateOf<TrafficReport?>(null) }
 
+    // Build the filter to fetch the relevant reports based on filter
     val filteredReports = remember(reports, selectedFilter, myReportsOnly, criticalOnly, searchQuery) {
         reports
             .let { list -> if (selectedFilter == null) list else list.filter { it.type == selectedFilter } }
@@ -86,6 +88,7 @@ fun ReportListScreen(
     }
 
     if (reportToDelete.value != null) {
+        // Confirmation dialogue for report deletion
         AlertDialog(
             onDismissRequest = { reportToDelete.value = null },
             title = { Text(stringResource(R.string.dialog_delete_title)) },
@@ -187,6 +190,7 @@ fun ReportListScreen(
                         false // always snap back
                     }
                 )
+                // Swipe actions for report card, swipe right to edit, swipe left to delete
                 SwipeToDismissBox(
                     state = dismissState,
                     enableDismissFromStartToEnd = isCreator,

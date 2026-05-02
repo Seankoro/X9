@@ -3,10 +3,16 @@ package dk.itu.moapd.x9.s25134.speech
 import dk.itu.moapd.x9.s25134.model.Severity
 import java.util.Locale
 
+/**
+ * Object to parse user's speech input into usable Strings for Traffic Report Creation.
+ * Functionality for now is only scoped to only report types and report severity.
+ */
 object SpeechParser {
 
     // Ordered so multi-word keywords appear before their single-word subsets.
     // Within each mapping group, order does not matter — leftmost-in-utterance wins.
+    // Extend both lists if needed to include more possible ways to map speech to type keywords and
+    // report severity levels.
     private val typeKeywords: List<Pair<String, String>> = listOf(
         "speed camera" to "Speed Camera",
         "road works"   to "Road Work",

@@ -43,6 +43,7 @@ import dk.itu.moapd.x9.s25134.ui.components.ScreenHeader
 import dk.itu.moapd.x9.s25134.ui.components.userInitials
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 
+// Profile screen to show user details and relevant setting, mostly empty but open for future extensions
 @Composable
 fun ProfileScreen(
     currentUser: User?,

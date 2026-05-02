@@ -27,6 +27,8 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import dk.itu.moapd.x9.s25134.R
 
+// Composable to show user's current location on a Map display, used in report creation and report
+// details screen.
 @Composable
 fun LocationPreviewSection(
     isLoadingLocation: Boolean,

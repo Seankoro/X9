@@ -41,16 +41,16 @@ import java.io.File
 
 private const val TAG = "PhotoPickerSection"
 
+// Creates a temp file in app's private cache, converts into a FileProvider URI for inter-app sharing
 private fun createCameraOutputUri(context: Context): Pair<File, Uri> {
-    // File.createTempFile is an IO operation. It is fast enough in practice
-    // not to cause an ANR (no data is written here), but it does trigger
-    // StrictMode in debug builds. For this exercise scope this is acceptable.
     val dir = File(context.cacheDir, "camera_images").also { it.mkdirs() }
     val file = File.createTempFile("report_photo_", ".jpg", dir)
     val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     return file to uri
 }
 
+// Composable responsible for the photo selection lifecycle in a report form
+// Auto cleaning up when the users remove the photo
 @Composable
 fun PhotoPickerSection(
     selectedImageUri: Uri?,
@@ -81,24 +81,26 @@ fun PhotoPickerSection(
         }
     }
 
-    // cameraLauncher must be declared above this block because the permission callback
-    // references it via closure.
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            try {
-                val (file, uri) = createCameraOutputUri(context)
-                cameraOutputFile.value = file
-                cameraOutputUri.value = uri
-                cameraLauncher.launch(uri)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to create temp file: ${e.message}")
-            }
+    // Function to launch camera
+    fun launchCamera() {
+        try {
+            val (file, uri) = createCameraOutputUri(context)
+            cameraOutputFile.value = file
+            cameraOutputUri.value = uri
+            cameraLauncher.launch(uri)
+        } catch (e: Exception) {
+            Log.e(TAG, "Camera launch failed: ${e.message}")
         }
     }
 
-    // PickVisualMedia uses the Android Photo Picker on API 33+ and falls back to
+    // Verify camera permissions before launching camera
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) launchCamera()
+    }
+
+    // PickVisualMedia uses the Android Photo Picker and falls back to
     // ACTION_GET_CONTENT on older devices. No CAMERA or READ_MEDIA_IMAGES permission needed.
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -115,18 +117,8 @@ fun PhotoPickerSection(
                 val hasCameraPermission = ContextCompat.checkSelfPermission(
                     context, Manifest.permission.CAMERA
                 ) == PackageManager.PERMISSION_GRANTED
-                if (hasCameraPermission) {
-                    try {
-                        val (file, uri) = createCameraOutputUri(context)
-                        cameraOutputFile.value = file
-                        cameraOutputUri.value = uri
-                        cameraLauncher.launch(uri)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Camera launch failed: ${e.message}")
-                    }
-                } else {
-                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                }
+                if (hasCameraPermission) launchCamera()
+                else cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             },
             modifier = Modifier.weight(1f)
         ) {
@@ -168,17 +160,18 @@ fun PhotoPickerSection(
 
     if (showingNewImage || showingExistingImage) {
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
+        // ContentScale.Fit preserves the original aspect ratio so the preview matches
+        // what will be displayed on the report detail screen.
         AsyncImage(
             model = if (showingNewImage) selectedImageUri else existingImageUrl,
             contentDescription = stringResource(R.string.cd_report_photo),
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(dimensionResource(R.dimen.map_embed_height))
                 .clip(RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)))
         )
         TextButton(onClick = {
-            // Clean up internal camera temp file reference before signalling removal.
+            // Clean up internal camera temp file reference before signaling removal.
             cameraOutputFile.value?.delete()
             cameraOutputFile.value = null
             cameraOutputUri.value = null

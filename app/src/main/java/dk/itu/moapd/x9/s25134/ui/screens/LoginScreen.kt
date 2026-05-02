@@ -1,8 +1,8 @@
 package dk.itu.moapd.x9.s25134.ui.screens
 
 import android.content.Context
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,8 +52,12 @@ import androidx.compose.ui.unit.sp
 import dk.itu.moapd.x9.s25134.R
 import dk.itu.moapd.x9.s25134.ui.theme.X9ComposeTheme
 
+// File-level enum so AuthMode is a named screen concept, not an anonymous local detail.
 enum class AuthMode { SIGN_IN, REGISTER }
 
+// Single screen for both sign-in and registration, toggled via AuthMode.
+// All form state is local — intentionally not in the ViewModel, since it is
+// ephemeral input that does not need to outlive the screen.
 @Composable
 fun LoginScreen(
     isLoading: Boolean,
@@ -72,6 +76,7 @@ fun LoginScreen(
 
     val context = LocalContext.current
 
+    // Resolve string resources here to be used for the rest of the files
     val requiredError = stringResource(R.string.error_fields_required)
     val passwordMismatchError = stringResource(R.string.error_passwords_no_match)
     val brandPrefix = stringResource(R.string.brand_name_prefix)
@@ -219,7 +224,8 @@ fun LoginScreen(
                 )
             }
 
-            // Field error
+            // Field error — !! is safe here because the branch only runs when fieldError != null.
+            // Smart cast is unavailable on delegated `var` properties, so !! is the idiomatic workaround.
             if (fieldError != null) {
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
                 Text(
@@ -242,6 +248,7 @@ fun LoginScreen(
                         mode == AuthMode.REGISTER && password != confirmPassword -> {
                             fieldError = passwordMismatchError
                         }
+                        // email and displayName are trimmed; password is intentionally not trimmed
                         mode == AuthMode.SIGN_IN -> onSignInWithEmail(email.trim(), password)
                         else -> onRegisterWithEmail(displayName.trim(), email.trim(), password)
                     }
@@ -300,7 +307,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(dimensionResource(R.dimen.button_height_primary)),
                 shape = RoundedCornerShape(dimensionResource(R.dimen.button_corner_radius)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
                 Text(
                     text = stringResource(R.string.btn_sign_in_google),

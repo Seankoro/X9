@@ -37,6 +37,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+// Individual report cards in the traffic report list
 @Composable
 fun TrafficReportCard(
     report: TrafficReport,

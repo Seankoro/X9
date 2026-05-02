@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+// Handles sign-in (email and Google), registration, and sign-out.
+// Extends AndroidViewModel for access to Application.getString() — needed to resolve
+// string resources from coroutine callbacks outside the Compose tree.
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {
@@ -31,14 +34,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = AuthRepository()
 
-    // Auth state is owned by the repository; ViewModel exposes it directly.
+    // Auth state is owned by the repository (Firebase listener lives there).
+    // The ViewModel exposes it directly rather than copying into a separate StateFlow.
     val currentUser: StateFlow<User?> = repository.currentUser
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    // Auth error messages are emitted here and collected in the UI via LaunchedEffect.
-    // Using SharedFlow avoids passing Compose-scoped lambdas into the ViewModel.
+    // Auth error messages are one-shot events — SharedFlow is used instead of StateFlow
+    // so the UI doesn't re-show an old error on recomposition.
+    // extraBufferCapacity = 1 ensures tryEmit never silently drops an error if the
+    // collector is momentarily suspended.
     private val _authError = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val authError: SharedFlow<String> = _authError.asSharedFlow()
 
@@ -83,6 +89,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // context must be an Activity context — CredentialManager.getCredential() needs to
+    // anchor the system bottom sheet to a running Activity, not the Application.
     fun signInWithGoogleCredential(context: Context) {
         _isLoading.value = true
         viewModelScope.launch {
@@ -90,6 +98,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 val credentialManager = CredentialManager.create(context)
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setServerClientId(getString(R.string.default_web_client_id))
+                    // false = show all Google accounts on the device, not just previously
+                    // authorized ones. Required for first-time sign-in.
                     .setFilterByAuthorizedAccounts(false)
                     .build()
                 val request = GetCredentialRequest.Builder()
@@ -114,9 +124,11 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Firebase signOut() is synchronous — no coroutine or loading state needed.
     fun signOut() {
         repository.signOut()
     }
 
+    // Convenience wrapper so callers don't need to repeat getApplication<Application>().
     private fun getString(@StringRes id: Int): String = getApplication<Application>().getString(id)
 }

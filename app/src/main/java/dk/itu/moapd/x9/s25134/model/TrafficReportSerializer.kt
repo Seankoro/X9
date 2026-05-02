@@ -5,6 +5,7 @@ import com.google.firebase.database.DataSnapshot
 
 private const val TAG = "TrafficReportSerializer"
 
+// Helper serializer to map TrafficReport to and from Firebase Snapshot to usable objects in code
 fun TrafficReport.toMap(): Map<String, Any?> = mapOf(
     "id" to id,
     "type" to type,

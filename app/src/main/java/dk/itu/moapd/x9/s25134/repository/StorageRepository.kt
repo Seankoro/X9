@@ -14,6 +14,11 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 
+/**
+ * Repository layer to abstract the operations with Firebase Storage.
+ * Defines the operations with Firebase Storage and rest of application will interact with
+ * Firebase Storage through this repository.
+ */
 class StorageRepository(private val context: Context) {
 
     companion object {

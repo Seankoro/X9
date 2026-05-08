@@ -50,7 +50,7 @@ more prominent screens in X9 and briefly the design considerations behind each o
 - At the top of the dashboard, there is a `2x2` stat card that provides quick filter options to
 reports. E.g., there is the filter for `Active Reports` and `Resolved Today` reports. There is also
 filters to filter between your own created reports and critical reports. These quick filter options
-allow users to quickly fine reports that are of interest to them.
+allow users to quickly find reports that are of interest to them.
 - There are 2 `Quick Actions cards` namely `New Report` and `View Map` which allows users to quickly
 access the report creation workflow and view the maps quickly.
 - The `Recent Reports` section provides a list of summarized reports. Users can read recent reports 
@@ -97,7 +97,7 @@ This provides users with both visual and textual ways to check if their current 
     - Similar to existing traffic navigation apps (Google Maps, Waze etc.), when users are within 
     the proximity of certain traffic reports, users will receive a notification about them.
     - We will implement Geofences of 500m around all reports with severity `HIGH` or `CRITICAL` and
-    will notify users about them with a cooldown of 1 hour tht is stored using `SharedPreferences`. 
+    will notify users about them with a cooldown of 1 hour that is stored using `SharedPreferences`. 
     This prevents the users from being spammed with notifications everytime X9 syncs with Firebase.
     - **Rationale**: Alerting users of the reports that concerns then while commuting, allowing them
     to take relevant actions to protect themselves.
@@ -287,7 +287,7 @@ any human errors in the testing process.
     has been granted yet so `ACCESS_BACKGROUND_LOCATION` does not work.
     - Furthermore, there is an inherent race condition that cannot be avoided in the registering of
     Geofences. Geofences is registered once Firebase Realtime database emits the reports and without
-    these permissions working correctly, Geofences cannot be registered correctly
+    these permissions working correctly, Geofences cannot be registered correctly.
    
     ![Geofence register error](img/A2/geofence-logcat-error.png)
 
@@ -317,7 +317,7 @@ any human errors in the testing process.
     - The `ENUM` defined also cannot be deserialized directly to Firebase Realtime DB.
     - To fix these issues, the `TrafficReportSerializer.kt` was implemented with functions like
     `DataSnapshot.toTrafficReport()` extension function convert all numeric fields via 
-    `toSring().toDoubleOrNull()` to handle both `Long` and `Double` values transparently. The `Int`
+    `toString().toDoubleOrNull()` to handle both `Long` and `Double` values transparently. The `Int`
     and string fo the `ENUM` is also used in the serializer to safely convert between an `ENUM` and
     what is stored in the database.
 
